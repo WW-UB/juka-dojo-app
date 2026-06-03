@@ -395,6 +395,10 @@
       <span class="menu-icon">🎫</span>
       <div><div class="menu-label">Gastticket-Liste</div><div class="menu-desc">Alle Gastticket-Geber</div></div>
     </button>
+    <button class="menu-btn" id="menu-cockpit-btn" onclick="loadCockpit()" style="display:none;">
+      <span class="menu-icon">🏢</span>
+      <div><div class="menu-label">Cockpit</div><div class="menu-desc">Monatliche KPIs & Kennzahlen</div></div>
+    </button>
   </div>
   <div id="menu-admin" style="display:none;">
     <div class="section-title" style="margin-top:8px;">Admin</div>
@@ -731,6 +735,16 @@
 </div>
 
 <!-- ══════════════════ ADMIN ══════════════════ -->
+<!-- ════════════════════════ COCKPIT ════════════════════════ -->
+<div class="screen" id="screen-cockpit">
+  <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+    <select id="ck-location" class="input" style="flex:1;min-width:130px;" onchange="loadCockpitData()"></select>
+    <select id="ck-year" class="input" style="width:90px;" onchange="loadCockpitData()"></select>
+  </div>
+  <div id="ck-month-tabs" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;"></div>
+  <div id="ck-content"></div>
+</div>
+
 <div class="screen" id="screen-admin">
   <div class="card">
     <div class="card-title">➕ Neue Mitarbeiterin</div>
@@ -799,6 +813,7 @@ function updateHeader(id) {
     'screen-closings-list': 'Abschlussliste', 'screen-prospects-list': 'Nichtabschlussliste',
     'screen-gt-list': 'Gastticket-Liste', 'screen-targets': 'Monatsziele',
     'screen-settings': 'Grundeinstellungen', 'screen-admin': 'Mitarbeiterverwaltung',
+    'screen-cockpit': 'Cockpit',
   };
   document.getElementById('header-title').textContent = titles[id] || 'juka dojo';
   const sub = currentEmployee ? `${currentEmployee.name} · ${currentEmployee.location}` : '';
@@ -915,6 +930,7 @@ async function doLogin() {
 
   document.getElementById('menu-manager').style.display = (emp.is_manager || emp.is_admin) ? 'block' : 'none';
   document.getElementById('menu-admin').style.display   = emp.is_admin ? 'block' : 'none';
+  document.getElementById('menu-cockpit-btn').style.display = (emp.is_manager || emp.is_admin) ? 'flex' : 'none';
 
   const opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
   document.getElementById('menu-date').textContent = new Date().toLocaleDateString('de-DE', opts);
@@ -1642,6 +1658,206 @@ document.addEventListener('DOMContentLoaded', () => {
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+
+// ══════════════════════════════════════════════════
+// COCKPIT
+// ══════════════════════════════════════════════════
+let _ckMonth = new Date().getMonth() + 1;
+
+const CK_GROUPS = [
+  { label: 'Mitglieder', fields: [
+    { key: 'gesamtmitglieder',     label: 'Gesamtmitglieder',       fmt: 'int' },
+    { key: 'mitglieder_ohne_vips', label: 'Mitglieder (ohne VIPs)', fmt: 'int' },
+    { key: 'zahlaktive',           label: 'Zahlaktive',             fmt: 'int' },
+    { key: 'nicht_zahlende',       label: 'Nicht Zahlende',         fmt: 'int' },
+    { key: 'pausierende',          label: 'Pausierende',            fmt: 'int' },
+    { key: 'vips',                 label: 'VIPs',                   fmt: 'int' },
+    { key: 'mitarbeiter',          label: 'Mitarbeiter',            fmt: 'int' },
+  ]},
+  { label: 'Abschlüsse & Kündigungen', fields: [
+    { key: 'abschluesse_gesamt',   label: 'Abschlüsse (ohne Rücktritt)', fmt: 'int' },
+    { key: 'abschluesse_ai_pakete',label: 'Abschl. All-Inclusive',  fmt: 'int' },
+    { key: 'bestand_ai_pakete',    label: 'Bestand All-Inclusive',  fmt: 'int' },
+    { key: 'durchschn_beitrag',    label: 'Ø Beitrag (€)',          fmt: 'eur' },
+    { key: 'durchschn_laufzeit',   label: 'Ø Laufzeit (Monate)',    fmt: 'dec' },
+    { key: 'eingeg_kuendigungen',  label: 'Eingeg. Kündigungen',    fmt: 'int' },
+    { key: 'wirksame_kuendigungen',label: 'Wirksame Kündigungen',   fmt: 'int' },
+    { key: 'durchschn_beitrag_kdg',label: 'Ø Beitrag Kdg. (€)',    fmt: 'eur' },
+  ]},
+  { label: 'Umsatz & Beiträge', fields: [
+    { key: 'beitraege_lastschriften', label: 'Beiträge (Brutto)',   fmt: 'eur' },
+    { key: 'eingang_startpakete',  label: 'Eingang Startpakete',    fmt: 'eur' },
+  ]},
+  { label: 'Nutzung & Betrieb', fields: [
+    { key: 'checkins',             label: 'Check-ins gesamt',       fmt: 'int' },
+    { key: 'five_nutzer',          label: 'Five Nutzer',            fmt: 'int' },
+    { key: 'milon_nutzer',         label: 'Milon Nutzer',           fmt: 'int' },
+    { key: 'medyjet_nutzer',       label: 'MedyJet Nutzer',        fmt: 'int' },
+    { key: 'mitarbeiterstunden',   label: 'Mitarbeiterstunden',     fmt: 'dec' },
+  ]},
+  { label: 'Energie', fields: [
+    { key: 'stromverbrauch',       label: 'Strom (kWh)',            fmt: 'dec' },
+    { key: 'wasserverbrauch',      label: 'Wasser (m³)',            fmt: 'dec' },
+    { key: 'oel_liter',            label: 'Öl (Liter)',             fmt: 'dec' },
+  ]},
+];
+
+const MONTHS_DE = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+
+function fmtCk(val, fmt) {
+  if (val === null || val === undefined) return '–';
+  const n = parseFloat(val);
+  if (isNaN(n)) return '–';
+  if (fmt === 'int') return Math.round(n).toLocaleString('de-DE');
+  if (fmt === 'eur') return n.toLocaleString('de-DE', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €';
+  if (fmt === 'dec') return n.toLocaleString('de-DE', {minimumFractionDigits:1, maximumFractionDigits:1});
+  return n;
+}
+
+async function loadCockpit() {
+  navigate('screen-cockpit');
+  const locs = _locsCache || [];
+  const sel = document.getElementById('ck-location');
+  sel.innerHTML = locs.map(l => `<option value="${l.id}">${l.name.replace('juka dojo ','')}</option>`).join('');
+  if (currentEmployee?.location_id) sel.value = currentEmployee.location_id;
+
+  const yrSel = document.getElementById('ck-year');
+  const curYear = new Date().getFullYear();
+  yrSel.innerHTML = [2022,2023,2024,2025,2026].map(y =>
+    `<option value="${y}" ${y===curYear?'selected':''}>${y}</option>`).join('');
+
+  buildCkMonthTabs();
+  await loadCockpitData();
+}
+
+function buildCkMonthTabs() {
+  const tabs = document.getElementById('ck-month-tabs');
+  tabs.innerHTML = MONTHS_DE.map((m, i) => `
+    <button onclick="selectCkMonth(${i+1})" id="ck-tab-${i+1}"
+      style="padding:6px 12px;border-radius:20px;border:none;font-size:13px;white-space:nowrap;cursor:pointer;
+             background:${_ckMonth===i+1?'var(--primary)':'var(--bg)'};
+             color:${_ckMonth===i+1?'#fff':'var(--text)'};font-weight:${_ckMonth===i+1?'700':'400'};">
+      ${m}
+    </button>`).join('');
+}
+
+function selectCkMonth(m) {
+  _ckMonth = m;
+  buildCkMonthTabs();
+  loadCockpitData();
+}
+
+async function loadCockpitData() {
+  const locId = document.getElementById('ck-location').value;
+  const year  = parseInt(document.getElementById('ck-year').value);
+  const cont  = document.getElementById('ck-content');
+  cont.innerHTML = '<div style="color:var(--muted);text-align:center;padding:32px;">Lade…</div>';
+
+  const { data, error } = await db.from('cockpit')
+    .select('*')
+    .eq('location_id', locId)
+    .eq('year', year)
+    .order('month');
+
+  if (error) { cont.innerHTML = `<div style="color:red;">Fehler: ${error.message}</div>`; return; }
+
+  const row = data?.find(r => r.month === _ckMonth);
+  const allMonths = data || [];
+
+  // Build year overview table + current month detail
+  let html = '';
+
+  // Current month detail
+  html += `<div class="card" style="margin-bottom:16px;">
+    <div class="card-title">${MONTHS_DE[_ckMonth-1]} ${year}</div>`;
+
+  if (!row) {
+    html += `<div style="color:var(--muted);font-size:14px;">Keine Daten für diesen Monat.`;
+    if (currentEmployee?.is_manager || currentEmployee?.is_admin) {
+      html += ` <button class="btn" style="margin-top:8px;" onclick="openCkEntry(${year},${_ckMonth},'${locId}')">Daten eintragen</button>`;
+    }
+    html += `</div>`;
+  } else {
+    CK_GROUPS.forEach(g => {
+      const hasData = g.fields.some(f => row[f.key] !== null && row[f.key] !== undefined);
+      if (!hasData) return;
+      html += `<div style="font-weight:700;font-size:13px;color:var(--primary);margin:12px 0 6px;">${g.label}</div>`;
+      html += `<table style="width:100%;border-collapse:collapse;font-size:14px;">`;
+      g.fields.forEach(f => {
+        const val = row[f.key];
+        if (val === null || val === undefined) return;
+        html += `<tr><td style="padding:5px 0;color:var(--muted);width:60%;">${f.label}</td>
+                     <td style="padding:5px 0;text-align:right;font-weight:600;">${fmtCk(val,f.fmt)}</td></tr>`;
+      });
+      html += `</table>`;
+    });
+    if (currentEmployee?.is_manager || currentEmployee?.is_admin) {
+      html += `<button class="btn btn-secondary" style="margin-top:12px;width:100%;" onclick="openCkEntry(${year},${_ckMonth},'${locId}')">Bearbeiten</button>`;
+    }
+  }
+  html += `</div>`;
+
+  // Year overview (Abschlüsse + Beiträge)
+  if (allMonths.length > 0) {
+    html += `<div class="card"><div class="card-title">Jahresübersicht ${year}</div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+    <tr><th style="text-align:left;padding:4px 0;color:var(--muted);font-weight:500;">Monat</th>
+        <th style="text-align:right;padding:4px 0;color:var(--muted);font-weight:500;">Mitgl.</th>
+        <th style="text-align:right;padding:4px 0;color:var(--muted);font-weight:500;">Abschl.</th>
+        <th style="text-align:right;padding:4px 0;color:var(--muted);font-weight:500;">Beiträge</th></tr>`;
+    allMonths.forEach(r => {
+      const isActive = r.month === _ckMonth;
+      html += `<tr style="background:${isActive?'rgba(232,152,26,0.08)':''};" onclick="selectCkMonth(${r.month})" style="cursor:pointer;">
+        <td style="padding:5px 0;font-weight:${isActive?'700':'400'};cursor:pointer;">${MONTHS_DE[r.month-1]}</td>
+        <td style="text-align:right;padding:5px 0;">${fmtCk(r.gesamtmitglieder,'int')}</td>
+        <td style="text-align:right;padding:5px 0;">${fmtCk(r.abschluesse_gesamt,'int')}</td>
+        <td style="text-align:right;padding:5px 0;">${fmtCk(r.beitraege_lastschriften,'eur')}</td>
+      </tr>`;
+    });
+    html += `</table></div>`;
+  }
+
+  cont.innerHTML = html;
+}
+
+async function openCkEntry(year, month, locId) {
+  const { data } = await db.from('cockpit').select('*').eq('location_id',locId).eq('year',year).eq('month',month).single();
+  const r = data || {};
+
+  let fields = '';
+  CK_GROUPS.forEach(g => {
+    fields += `<div style="font-weight:700;font-size:13px;color:var(--primary);margin:14px 0 6px;">${g.label}</div>`;
+    g.fields.forEach(f => {
+      const v = r[f.key] !== null && r[f.key] !== undefined ? parseFloat(r[f.key]) : '';
+      fields += `<label style="font-size:13px;color:var(--muted);">${f.label}
+        <input class="input" type="number" step="any" id="cke-${f.key}" value="${v}" style="margin-top:2px;margin-bottom:6px;">
+      </label>`;
+    });
+  });
+
+  document.getElementById('ck-content').innerHTML = `
+    <div class="card">
+      <div class="card-title">${MONTHS_DE[month-1]} ${year} eintragen</div>
+      ${fields}
+      <div style="display:flex;gap:8px;margin-top:16px;">
+        <button class="btn" style="flex:1;" onclick="saveCkEntry(${year},${month},'${locId}')">Speichern</button>
+        <button class="btn btn-secondary" style="flex:1;" onclick="loadCockpitData()">Abbrechen</button>
+      </div>
+    </div>`;
+}
+
+async function saveCkEntry(year, month, locId) {
+  const payload = { location_id: locId, year, month };
+  CK_GROUPS.forEach(g => g.fields.forEach(f => {
+    const el = document.getElementById(`cke-${f.key}`);
+    payload[f.key] = el.value !== '' ? parseFloat(el.value) : null;
+  }));
+
+  const { error } = await db.from('cockpit').upsert(payload, { onConflict: 'location_id,year,month' });
+  if (error) { showToast('Fehler: ' + error.message); return; }
+  showToast('Gespeichert ✓');
+  await loadCockpitData();
 }
 </script>
 </body>
