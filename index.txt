@@ -1,0 +1,1648 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="theme-color" content="#E8981A" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="juka dojo" />
+  <link rel="manifest" href="manifest.json" />
+  <title>juka dojo</title>
+  <style>
+    :root {
+      --primary: #E8981A;
+      --primary-dark: #C47D10;
+      --primary-light: #FEF3DC;
+      --bg: #F2F2F7;
+      --card: #FFFFFF;
+      --text: #1C1C1E;
+      --muted: #8E8E93;
+      --border: #E5E5EA;
+      --success: #34C759;
+      --danger: #FF3B30;
+      --warning: #FF9500;
+      --radius: 16px;
+      --radius-sm: 10px;
+      --shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: var(--card);
+      padding: 12px 20px 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid var(--border);
+    }
+    .header-logo { height: 32px; }
+    .header-title { font-size: 17px; font-weight: 600; flex: 1; }
+    .header-sub { font-size: 12px; color: var(--muted); }
+    .header-back {
+      background: none; border: none; font-size: 24px; cursor: pointer;
+      color: var(--primary); padding: 4px 8px 4px 0; display: none;
+    }
+
+    /* ── Screens ── */
+    .screen { display: none; padding: 20px 16px; padding-bottom: 40px; }
+    .screen.active { display: block; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      margin-bottom: 14px;
+    }
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 14px;
+    }
+
+    /* ── Form ── */
+    label { display: block; font-size: 14px; color: var(--muted); margin-bottom: 5px; margin-top: 12px; }
+    label:first-child { margin-top: 0; }
+    input[type="text"], input[type="number"], input[type="date"],
+    input[type="email"], input[type="month"], select, textarea {
+      width: 100%; padding: 13px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 16px; color: var(--text);
+      background: white; -webkit-appearance: none; appearance: none;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none; border-color: var(--primary);
+    }
+    textarea { min-height: 80px; resize: vertical; }
+    .form-row { display: flex; gap: 10px; }
+    .form-row > * { flex: 1; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: block; width: 100%; padding: 15px;
+      border-radius: var(--radius-sm); border: none;
+      font-size: 16px; font-weight: 600; cursor: pointer;
+      text-align: center; transition: opacity 0.15s;
+    }
+    .btn:active { opacity: 0.8; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-secondary { background: var(--card); color: var(--primary); border: 1.5px solid var(--primary); }
+    .btn-danger { background: #fff0f0; color: var(--danger); border: 1.5px solid var(--danger); }
+    .btn + .btn { margin-top: 10px; }
+    .btn-sm {
+      padding: 9px 16px; border-radius: var(--radius-sm);
+      border: none; font-size: 14px; font-weight: 600; cursor: pointer;
+    }
+    .btn-sm-primary { background: var(--primary); color: white; }
+    .btn-sm-ghost { background: var(--bg); color: var(--text); }
+
+    /* ── Menu ── */
+    .menu-btn {
+      background: var(--card); border: none;
+      border-radius: var(--radius); padding: 16px 18px;
+      width: 100%; text-align: left; cursor: pointer;
+      display: flex; align-items: center; gap: 14px;
+      margin-bottom: 10px; box-shadow: var(--shadow);
+    }
+    .menu-btn:active { background: var(--primary-light); }
+    .menu-icon { font-size: 26px; width: 40px; text-align: center; }
+    .menu-label { font-size: 16px; font-weight: 600; }
+    .menu-desc { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+    /* ── Info rows ── */
+    .info-row {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 10px 0; border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { color: var(--muted); }
+    .info-value { font-weight: 600; }
+    .section-title {
+      font-size: 13px; font-weight: 600; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.5px;
+      margin: 18px 0 8px;
+    }
+
+    /* ── Number stepper ── */
+    .stepper { display: flex; align-items: center; gap: 0; margin-bottom: 2px; }
+    .stepper-btn {
+      width: 40px; height: 40px; border: 1.5px solid var(--border);
+      background: var(--bg); font-size: 20px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 300; color: var(--primary); flex-shrink: 0;
+    }
+    .stepper-btn:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+    .stepper-btn:last-child  { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+    .stepper-val {
+      flex: 1; text-align: center; padding: 10px;
+      border-top: 1.5px solid var(--border); border-bottom: 1.5px solid var(--border);
+      border-left: none; border-right: none;
+      font-size: 18px; font-weight: 600; background: white;
+    }
+
+    /* ── Mood selector ── */
+    .mood-row { display: flex; gap: 6px; margin-top: 4px; }
+    .mood-btn {
+      flex: 1; height: 38px; border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm); background: white;
+      font-size: 14px; font-weight: 600; cursor: pointer; color: var(--muted);
+    }
+    .mood-btn.selected { border-color: var(--primary); background: var(--primary); color: white; }
+
+    /* ── PIN pad ── */
+    .pin-display { display: flex; gap: 14px; justify-content: center; margin: 20px 0 12px; }
+    .pin-dot {
+      width: 16px; height: 16px; border-radius: 50%;
+      border: 2px solid var(--border); background: white;
+    }
+    .pin-dot.filled { background: var(--primary); border-color: var(--primary); }
+    .pin-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 8px; }
+    .pin-key {
+      background: white; border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm); padding: 16px;
+      font-size: 22px; font-weight: 500; cursor: pointer; text-align: center; color: var(--text);
+    }
+    .pin-key:active { background: var(--primary-light); }
+    .pin-key.wide { grid-column: span 2; font-size: 15px; }
+    .pin-error { color: var(--danger); font-size: 13px; text-align: center; min-height: 20px; margin-top: 6px; }
+
+    /* ── Stat cards ── */
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+    .stat-card {
+      background: var(--card); border-radius: var(--radius-sm);
+      padding: 16px; box-shadow: var(--shadow); text-align: center;
+    }
+    .stat-val { font-size: 28px; font-weight: 700; color: var(--primary); }
+    .stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .stat-soll { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* ── Progress bar ── */
+    .progress-bar {
+      height: 8px; background: var(--border); border-radius: 4px;
+      overflow: hidden; margin-top: 6px;
+    }
+    .progress-fill {
+      height: 100%; border-radius: 4px;
+      background: var(--primary); transition: width 0.4s ease;
+    }
+    .progress-fill.green  { background: var(--success); }
+    .progress-fill.yellow { background: var(--warning); }
+    .progress-fill.red    { background: var(--danger); }
+
+    /* ── Ampel dot ── */
+    .ampel { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; }
+    .ampel-gruen  { background: var(--success); }
+    .ampel-gelb   { background: var(--warning); }
+    .ampel-rot    { background: var(--danger); }
+    .ampel-grau   { background: var(--border); }
+
+    /* ── Tab bar ── */
+    .tab-bar { display: flex; gap: 6px; margin-bottom: 16px; }
+    .tab-btn {
+      flex: 1; padding: 10px 6px;
+      border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+      background: white; font-size: 12px; font-weight: 600;
+      cursor: pointer; color: var(--muted); text-align: center;
+    }
+    .tab-btn.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+
+    /* ── Filter bar ── */
+    .filter-bar { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+    .filter-select {
+      flex: 1; min-width: 120px; padding: 10px 12px;
+      border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+      font-size: 14px; background: white; -webkit-appearance: none;
+    }
+
+    /* ── List items ── */
+    .list-item {
+      background: var(--card); border-radius: var(--radius-sm);
+      padding: 14px 16px; margin-bottom: 8px;
+      box-shadow: var(--shadow); cursor: pointer;
+    }
+    .list-item-header { display: flex; justify-content: space-between; align-items: flex-start; }
+    .list-item-name { font-weight: 700; font-size: 15px; }
+    .list-item-badge {
+      font-size: 11px; font-weight: 600; padding: 3px 10px;
+      border-radius: 20px; background: var(--primary-light); color: var(--primary);
+    }
+    .list-item-meta { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    /* ── Admin cards ── */
+    .admin-card {
+      background: var(--card); border-radius: var(--radius);
+      box-shadow: var(--shadow); margin-bottom: 10px; overflow: hidden;
+    }
+    .admin-card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 18px; cursor: pointer;
+    }
+    .admin-card-header:active { background: var(--primary-light); }
+    .admin-card-body { display: none; padding: 0 18px 18px; border-top: 1px solid var(--border); }
+    .admin-card.open .admin-card-body { display: block; }
+    .admin-card.open .chevron { transform: rotate(90deg); }
+    .chevron { font-size: 18px; color: var(--muted); transition: transform 0.2s; }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed; bottom: 30px; left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #1C1C1E; color: white; padding: 12px 24px;
+      border-radius: 30px; font-size: 14px; font-weight: 500;
+      transition: transform 0.3s ease; z-index: 999; white-space: nowrap;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── Login ── */
+    #screen-login { padding-top: 30px; }
+    .login-logo { text-align: center; margin-bottom: 28px; }
+    .login-logo img { height: 64px; }
+    .login-logo .app-name { font-size: 22px; font-weight: 700; color: var(--text); margin-top: 10px; }
+    .login-logo .app-sub { font-size: 14px; color: var(--muted); }
+
+    .spinner { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+
+    /* ── Closing detail expand ── */
+    .closing-detail { display: none; margin-top: 10px; }
+    .closing-detail.open { display: block; }
+
+    /* ── KW chip ── */
+    .kw-chip {
+      display: inline-block; background: var(--primary-light);
+      color: var(--primary); font-size: 11px; font-weight: 700;
+      padding: 2px 8px; border-radius: 10px; margin-right: 6px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="header" id="app-header">
+  <button class="header-back" id="btn-back" onclick="goBack()">‹</button>
+  <div style="flex:1;">
+    <div class="header-title" id="header-title">juka dojo</div>
+    <div class="header-sub" id="header-sub"></div>
+  </div>
+</div>
+
+<!-- ══════════════════ LOGIN ══════════════════ -->
+<div class="screen active" id="screen-login">
+  <div class="login-logo">
+    <div style="font-size:32px;font-weight:800;color:var(--text);">juka <span style="color:var(--primary);">dojo</span></div>
+    <div class="app-sub">Fitness Club · Sales Report</div>
+  </div>
+
+  <div class="card" id="login-step-1">
+    <div class="card-title">Wer bist du?</div>
+    <label>Mitarbeiter/in</label>
+    <select id="select-employee" onchange="onEmpChange()">
+      <option value="">– bitte auswählen –</option>
+    </select>
+    <label style="margin-top:12px;">Standort</label>
+    <input type="text" id="display-location" readonly style="background:var(--bg);color:var(--muted);" />
+    <button class="btn btn-primary" style="margin-top:16px;" onclick="showPinPad()">Weiter →</button>
+  </div>
+
+  <div class="card" id="login-step-2" style="display:none;">
+    <div class="card-title" id="pin-title">PIN eingeben</div>
+    <div class="pin-display">
+      <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-error" id="pin-error"></div>
+    <div class="pin-pad">
+      <button class="pin-key" onclick="pinKey('1')">1</button>
+      <button class="pin-key" onclick="pinKey('2')">2</button>
+      <button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button>
+      <button class="pin-key" onclick="pinKey('5')">5</button>
+      <button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button>
+      <button class="pin-key" onclick="pinKey('8')">8</button>
+      <button class="pin-key" onclick="pinKey('9')">9</button>
+      <button class="pin-key wide" onclick="pinBack()">← Zurück</button>
+      <button class="pin-key" onclick="pinKey('0')">0</button>
+      <button class="pin-key" onclick="pinDelete()">⌫</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ MENU ══════════════════ -->
+<div class="screen" id="screen-menu">
+  <div style="color:var(--muted);font-size:13px;margin-bottom:16px;" id="menu-date"></div>
+
+  <!-- Persönlicher Zielstand -->
+  <div class="card" id="menu-target-card" style="display:none;">
+    <div class="card-title">Mein Ziel heute</div>
+    <div id="menu-target-content"></div>
+  </div>
+
+  <button class="menu-btn" onclick="navigate('screen-tagesreport')">
+    <span class="menu-icon">📋</span>
+    <div><div class="menu-label">Tagesreport</div><div class="menu-desc">Verkaufszahlen eintragen</div></div>
+  </button>
+  <button class="menu-btn" onclick="navigate('screen-abschluss')">
+    <span class="menu-icon">✅</span>
+    <div><div class="menu-label">Abschluss erfassen</div><div class="menu-desc">Neues Mitglied eintragen</div></div>
+  </button>
+  <button class="menu-btn" onclick="navigate('screen-prospect')">
+    <span class="menu-icon">🔄</span>
+    <div><div class="menu-label">Nichtabschluss</div><div class="menu-desc">Interessent für Wiedervorlage</div></div>
+  </button>
+  <button class="menu-btn" onclick="navigate('screen-gastticket')">
+    <span class="menu-icon">🎫</span>
+    <div><div class="menu-label">Gastticket eintragen</div><div class="menu-desc">Mitglied hat Gastticket gegeben</div></div>
+  </button>
+  <button class="menu-btn" onclick="loadMyStats()">
+    <span class="menu-icon">📈</span>
+    <div><div class="menu-label">Meine Übersicht</div><div class="menu-desc">Dieser Monat &amp; letzter Monat</div></div>
+  </button>
+
+  <div id="menu-manager" style="display:none;">
+    <div class="section-title" style="margin-top:24px;">Management</div>
+    <button class="menu-btn" onclick="loadDashboard()">
+      <span class="menu-icon">📊</span>
+      <div><div class="menu-label">Dashboard</div><div class="menu-desc">Team-Übersicht &amp; KW/YTD-Filter</div></div>
+    </button>
+    <button class="menu-btn" onclick="loadClosingsList()">
+      <span class="menu-icon">📋</span>
+      <div><div class="menu-label">Abschlussliste</div><div class="menu-desc">Alle Neumitglieder gefiltert</div></div>
+    </button>
+    <button class="menu-btn" onclick="loadProspectsList()">
+      <span class="menu-icon">🔄</span>
+      <div><div class="menu-label">Nichtabschlussliste</div><div class="menu-desc">Wiedervorlagen &amp; Interessenten</div></div>
+    </button>
+    <button class="menu-btn" onclick="loadGtList()">
+      <span class="menu-icon">🎫</span>
+      <div><div class="menu-label">Gastticket-Liste</div><div class="menu-desc">Alle Gastticket-Geber</div></div>
+    </button>
+  </div>
+  <div id="menu-admin" style="display:none;">
+    <div class="section-title" style="margin-top:8px;">Admin</div>
+    <button class="menu-btn" onclick="loadAdmin()">
+      <span class="menu-icon">⚙️</span>
+      <div><div class="menu-label">Mitarbeiterverwaltung</div><div class="menu-desc">Anlegen, PIN, Rechte</div></div>
+    </button>
+    <button class="menu-btn" onclick="navigate('screen-targets')">
+      <span class="menu-icon">🎯</span>
+      <div><div class="menu-label">Monatsziele</div><div class="menu-desc">Abschlüsse &amp; Gasttickets planen</div></div>
+    </button>
+    <button class="menu-btn" onclick="navigate('screen-settings')">
+      <span class="menu-icon">🔧</span>
+      <div><div class="menu-label">Grundeinstellungen</div><div class="menu-desc">Erschein- &amp; Abschlussquote</div></div>
+    </button>
+  </div>
+
+  <div style="margin-top:24px;">
+    <button class="btn btn-secondary" onclick="doLogout()">Abmelden</button>
+  </div>
+</div>
+
+<!-- ══════════════════ TAGESREPORT ══════════════════ -->
+<div class="screen" id="screen-tagesreport">
+  <form id="form-tagesreport" onsubmit="submitTagesreport(event)">
+    <div class="card">
+      <div class="card-title">Datum</div>
+      <input type="date" id="tr-date" required />
+    </div>
+
+    <div class="card">
+      <div class="card-title">Terminierte Beratungstermine</div>
+      <label>Erschienen</label>
+      <div class="stepper"><button type="button" class="stepper-btn" onclick="step('tr-bt-ersch',-1)">−</button><div class="stepper-val" id="tr-bt-ersch">0</div><button type="button" class="stepper-btn" onclick="step('tr-bt-ersch',1)">+</button></div>
+      <label>Abschlüsse</label>
+      <div class="stepper"><button type="button" class="stepper-btn" onclick="step('tr-bt-ab',-1)">−</button><div class="stepper-val" id="tr-bt-ab">0</div><button type="button" class="stepper-btn" onclick="step('tr-bt-ab',1)">+</button></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Walk-Ins</div>
+      <label>Walk-Ins gesamt</label>
+      <div class="stepper"><button type="button" class="stepper-btn" onclick="step('tr-wi-ges',-1)">−</button><div class="stepper-val" id="tr-wi-ges">0</div><button type="button" class="stepper-btn" onclick="step('tr-wi-ges',1)">+</button></div>
+      <label>Davon terminiert</label>
+      <div class="stepper"><button type="button" class="stepper-btn" onclick="step('tr-wi-term',-1)">−</button><div class="stepper-val" id="tr-wi-term">0</div><button type="button" class="stepper-btn" onclick="step('tr-wi-term',1)">+</button></div>
+      <label>Abschlüsse</label>
+      <div class="stepper"><button type="button" class="stepper-btn" onclick="step('tr-wi-ab',-1)">−</button><div class="stepper-val" id="tr-wi-ab">0</div><button type="button" class="stepper-btn" onclick="step('tr-wi-ab',1)">+</button></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Aktionsberatungen</div>
+      <label>Gesamt</label>
+      <div class="stepper"><button type="button" class="stepper-btn" onclick="step('tr-ak-ges',-1)">−</button><div class="stepper-val" id="tr-ak-ges">0</div><button type="button" class="stepper-btn" onclick="step('tr-ak-ges',1)">+</button></div>
+      <label>Als Tester gestartet</label>
+      <div class="stepper"><button type="button" class="stepper-btn" onclick="step('tr-ak-test',-1)">−</button><div class="stepper-val" id="tr-ak-test">0</div><button type="button" class="stepper-btn" onclick="step('tr-ak-test',1)">+</button></div>
+      <label>Sofortabschlüsse</label>
+      <div class="stepper"><button type="button" class="stepper-btn" onclick="step('tr-ak-sofort',-1)">−</button><div class="stepper-val" id="tr-ak-sofort">0</div><button type="button" class="stepper-btn" onclick="step('tr-ak-sofort',1)">+</button></div>
+      <label>Feedback-Beratungen</label>
+      <div class="stepper"><button type="button" class="stepper-btn" onclick="step('tr-ak-feed',-1)">−</button><div class="stepper-val" id="tr-ak-feed">0</div><button type="button" class="stepper-btn" onclick="step('tr-ak-feed',1)">+</button></div>
+      <label>Abschlüsse Feedback</label>
+      <div class="stepper"><button type="button" class="stepper-btn" onclick="step('tr-ak-feedab',-1)">−</button><div class="stepper-val" id="tr-ak-feedab">0</div><button type="button" class="stepper-btn" onclick="step('tr-ak-feedab',1)">+</button></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Gasttickets</div>
+      <label>Beratungen</label>
+      <div class="stepper"><button type="button" class="stepper-btn" onclick="step('tr-gt-ber',-1)">−</button><div class="stepper-val" id="tr-gt-ber">0</div><button type="button" class="stepper-btn" onclick="step('tr-gt-ber',1)">+</button></div>
+      <label>Abschlüsse</label>
+      <div class="stepper"><button type="button" class="stepper-btn" onclick="step('tr-gt-ab',-1)">−</button><div class="stepper-val" id="tr-gt-ab">0</div><button type="button" class="stepper-btn" onclick="step('tr-gt-ab',1)">+</button></div>
+      <label>Generierte Gasttickets</label>
+      <div class="stepper"><button type="button" class="stepper-btn" onclick="step('tr-gt-gen',-1)">−</button><div class="stepper-val" id="tr-gt-gen">0</div><button type="button" class="stepper-btn" onclick="step('tr-gt-gen',1)">+</button></div>
+      <label>Verzichtserklärungen</label>
+      <div class="stepper"><button type="button" class="stepper-btn" onclick="step('tr-gt-verz',-1)">−</button><div class="stepper-val" id="tr-gt-verz">0</div><button type="button" class="stepper-btn" onclick="step('tr-gt-verz',1)">+</button></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Abschlüsse &amp; Calls</div>
+      <label>Abschlüsse insgesamt</label>
+      <div class="stepper"><button type="button" class="stepper-btn" onclick="step('tr-ab-ges',-1)">−</button><div class="stepper-val" id="tr-ab-ges">0</div><button type="button" class="stepper-btn" onclick="step('tr-ab-ges',1)">+</button></div>
+      <label>Stunden Beraterschicht</label>
+      <input type="number" id="tr-stunden" step="0.5" min="0" placeholder="z.B. 4" />
+      <label>Calls gesamt</label>
+      <div class="stepper"><button type="button" class="stepper-btn" onclick="step('tr-calls-ges',-1)">−</button><div class="stepper-val" id="tr-calls-ges">0</div><button type="button" class="stepper-btn" onclick="step('tr-calls-ges',1)">+</button></div>
+      <label>Calls erreicht</label>
+      <div class="stepper"><button type="button" class="stepper-btn" onclick="step('tr-calls-err',-1)">−</button><div class="stepper-val" id="tr-calls-err">0</div><button type="button" class="stepper-btn" onclick="step('tr-calls-err',1)">+</button></div>
+      <label>Calls terminiert</label>
+      <div class="stepper"><button type="button" class="stepper-btn" onclick="step('tr-calls-term',-1)">−</button><div class="stepper-val" id="tr-calls-term">0</div><button type="button" class="stepper-btn" onclick="step('tr-calls-term',1)">+</button></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Stimmung heute</div>
+      <label>Stimmung im Club</label>
+      <div class="mood-row" id="mood-club"></div>
+      <label>Stimmung im Team</label>
+      <div class="mood-row" id="mood-team"></div>
+      <label>Wie war ich drauf?</label>
+      <div class="mood-row" id="mood-ich"></div>
+      <label style="margin-top:14px;">Bemerkungen (optional)</label>
+      <textarea id="tr-bemerkungen" placeholder="Freies Feld …"></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary">💾 Tagesreport speichern</button>
+    <button type="button" class="btn btn-secondary" onclick="goBack()">Abbrechen</button>
+    <div style="height:20px;"></div>
+  </form>
+</div>
+
+<!-- ══════════════════ ABSCHLUSS ══════════════════ -->
+<div class="screen" id="screen-abschluss">
+  <form id="form-abschluss" onsubmit="submitAbschluss(event)">
+    <div class="card">
+      <div class="card-title">Abschluss-Daten</div>
+      <label>Datum</label>
+      <input type="date" id="ab-date" required />
+      <div class="form-row">
+        <div><label>Vorname</label><input type="text" id="ab-vorname" placeholder="Vorname" required /></div>
+        <div><label>Nachname</label><input type="text" id="ab-nachname" placeholder="Nachname" required /></div>
+      </div>
+      <div class="form-row">
+        <div><label>PLZ</label><input type="text" id="ab-plz" placeholder="22587" /></div>
+        <div><label>E-Mail</label><input type="email" id="ab-email" placeholder="name@mail.de" /></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Tarif &amp; Produkt</div>
+      <div class="form-row">
+        <div><label>Grundtarif (€)</label><input type="number" id="ab-grundtarif" step="0.01" placeholder="19.99" /></div>
+        <div><label>Beitrag gesamt (€)</label><input type="number" id="ab-beitrag" step="0.01" placeholder="24.98" /></div>
+      </div>
+      <label>Module</label>
+      <input type="text" id="ab-module" placeholder="z.B. all in, milon" />
+      <div class="form-row">
+        <div><label>Startpaket (€)</label><input type="number" id="ab-startpaket" placeholder="79" /></div>
+        <div><label>Laufzeit (Monate)</label><input type="number" id="ab-laufzeit" placeholder="24" /></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Herkunft &amp; Extras</div>
+      <label>Werbung / Quelle</label>
+      <input type="text" id="ab-werbung" placeholder="z.B. Instagram, Flyer, Empfehlung" />
+      <label>Gasttickets (Anzahl)</label>
+      <div class="stepper"><button type="button" class="stepper-btn" onclick="step('ab-gt',-1)">−</button><div class="stepper-val" id="ab-gt">0</div><button type="button" class="stepper-btn" onclick="step('ab-gt',1)">+</button></div>
+      <label style="margin-top:12px;">Bemerkung / Angebot</label>
+      <textarea id="ab-bemerkung" placeholder="z.B. ZG, kein Angebot …"></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary">✅ Abschluss speichern</button>
+    <button type="button" class="btn btn-secondary" onclick="goBack()">Abbrechen</button>
+    <div style="height:20px;"></div>
+  </form>
+</div>
+
+<!-- ══════════════════ NICHTABSCHLUSS ══════════════════ -->
+<div class="screen" id="screen-prospect">
+  <form id="form-prospect" onsubmit="submitProspect(event)">
+    <div class="card">
+      <div class="card-title">Interessent</div>
+      <label>Datum</label>
+      <input type="date" id="pr-date" required />
+      <div class="form-row">
+        <div><label>Vorname</label><input type="text" id="pr-vorname" placeholder="Vorname" /></div>
+        <div><label>Nachname</label><input type="text" id="pr-nachname" placeholder="Nachname" /></div>
+      </div>
+      <div class="form-row">
+        <div><label>E-Mail</label><input type="email" id="pr-email" placeholder="name@mail.de" /></div>
+        <div><label>PLZ</label><input type="text" id="pr-plz" placeholder="22587" /></div>
+      </div>
+      <label>Werbung / Quelle</label>
+      <input type="text" id="pr-werbung" placeholder="z.B. Instagram, Nähe" />
+      <label>Laufzeit (Monate)</label>
+      <input type="number" id="pr-laufzeit" placeholder="24" />
+    </div>
+
+    <div class="card">
+      <div class="card-title">Nichtabschluss-Grund</div>
+      <label>Kundenziel</label>
+      <input type="text" id="pr-ziel" placeholder="Was möchte der Kunde erreichen?" />
+      <label>Grund des Nichtabschlusses</label>
+      <textarea id="pr-grund" placeholder="z.B. wartet auf Arzt, zu teuer …"></textarea>
+      <div class="form-row">
+        <div><label>Neuer Termin</label><input type="date" id="pr-termin" /></div>
+        <div><label>Wiedervorlage</label><input type="date" id="pr-wiedervorlage" /></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:12px;">
+        <input type="checkbox" id="pr-gt" style="width:auto;" />
+        <label for="pr-gt" style="margin:0;color:var(--text);">🎫 Gastticket erhalten</label>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">💾 Nichtabschluss speichern</button>
+    <button type="button" class="btn btn-secondary" onclick="goBack()">Abbrechen</button>
+    <div style="height:20px;"></div>
+  </form>
+</div>
+
+<!-- ══════════════════ GASTTICKET ══════════════════ -->
+<div class="screen" id="screen-gastticket">
+  <form id="form-gastticket" onsubmit="submitGastticket(event)">
+    <div class="card">
+      <div class="card-title">Gastticket-Geber</div>
+      <label>Datum</label>
+      <input type="date" id="gt-date" required />
+      <label>Name des Mitglieds</label>
+      <input type="text" id="gt-name" placeholder="Vorname Nachname" required />
+      <label>Bemerkung (optional)</label>
+      <textarea id="gt-bemerkung" placeholder="z.B. gibt 2 Tickets, Freundin kommt am …"></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">🎫 Gastticket speichern</button>
+    <button type="button" class="btn btn-secondary" onclick="goBack()">Abbrechen</button>
+    <div style="height:20px;"></div>
+  </form>
+</div>
+
+<!-- ══════════════════ MEINE ÜBERSICHT ══════════════════ -->
+<div class="screen" id="screen-my-stats">
+  <div class="tab-bar">
+    <button class="tab-btn active" id="mst-tab-month" onclick="switchMyStats('month')">Dieser Monat</button>
+    <button class="tab-btn" id="mst-tab-last" onclick="switchMyStats('last')">Letzter Monat</button>
+  </div>
+  <div id="my-stats-content"><div class="spinner">Lade …</div></div>
+</div>
+
+<!-- ══════════════════ DASHBOARD ══════════════════ -->
+<div class="screen" id="screen-dashboard">
+  <div class="card">
+    <div class="card-title">Filter</div>
+    <div class="form-row">
+      <div>
+        <label>Zeitraum</label>
+        <select id="dash-period" onchange="onDashFilterChange()">
+          <option value="kw">Kalenderwoche</option>
+          <option value="ytd">YTD (Jahr bis heute)</option>
+          <option value="month">Monat</option>
+        </select>
+      </div>
+      <div id="dash-kw-picker">
+        <label>KW</label>
+        <input type="week" id="dash-week" onchange="loadDashboard()" />
+      </div>
+      <div id="dash-month-picker" style="display:none;">
+        <label>Monat</label>
+        <input type="month" id="dash-month" onchange="loadDashboard()" />
+      </div>
+    </div>
+    <label>Standort</label>
+    <select id="dash-location" onchange="loadDashboard()">
+      <option value="">Alle Standorte</option>
+    </select>
+    <label>Mitarbeiter/in</label>
+    <select id="dash-employee" onchange="loadDashboard()">
+      <option value="">Alle Mitarbeiterinnen</option>
+    </select>
+  </div>
+  <div id="dashboard-content"><div class="spinner">Filter wählen …</div></div>
+</div>
+
+<!-- ══════════════════ ABSCHLUSSLISTE ══════════════════ -->
+<div class="screen" id="screen-closings-list">
+  <div class="filter-bar">
+    <select class="filter-select" id="cl-location" onchange="loadClosingsList()">
+      <option value="">Alle Standorte</option>
+    </select>
+    <select class="filter-select" id="cl-employee" onchange="loadClosingsList()">
+      <option value="">Alle MA</option>
+    </select>
+  </div>
+  <div class="filter-bar">
+    <select class="filter-select" id="cl-period">
+      <option value="month">Monat</option>
+      <option value="kw">KW</option>
+    </select>
+    <input type="month" class="filter-select" id="cl-month" style="flex:1;" onchange="loadClosingsList()" />
+    <input type="week" class="filter-select" id="cl-week" style="display:none;flex:1;" onchange="loadClosingsList()" />
+  </div>
+  <div id="closings-list-content"><div class="spinner">Lade …</div></div>
+</div>
+
+<!-- ══════════════════ NICHTABSCHLUSSLISTE ══════════════════ -->
+<div class="screen" id="screen-prospects-list">
+  <div class="filter-bar">
+    <select class="filter-select" id="pl-location" onchange="loadProspectsList()"><option value="">Alle Standorte</option></select>
+    <select class="filter-select" id="pl-employee" onchange="loadProspectsList()"><option value="">Alle MA</option></select>
+    <input type="month" class="filter-select" id="pl-month" onchange="loadProspectsList()" />
+  </div>
+  <div id="prospects-list-content"><div class="spinner">Lade …</div></div>
+</div>
+
+<!-- ══════════════════ GASTTICKET-LISTE ══════════════════ -->
+<div class="screen" id="screen-gt-list">
+  <div class="filter-bar">
+    <select class="filter-select" id="gtl-location" onchange="loadGtList()"><option value="">Alle Standorte</option></select>
+    <input type="month" class="filter-select" id="gtl-month" onchange="loadGtList()" />
+  </div>
+  <div id="gt-list-content"><div class="spinner">Lade …</div></div>
+</div>
+
+<!-- ══════════════════ MONATSZIELE ══════════════════ -->
+<div class="screen" id="screen-targets">
+  <div class="card">
+    <div class="card-title">Ziele definieren</div>
+    <label>Standort</label>
+    <select id="tgt-location"></select>
+    <label>Monat</label>
+    <input type="month" id="tgt-month" />
+    <label>Abschlüsse (Monatsziel)</label>
+    <input type="number" id="tgt-abschluesse" placeholder="z.B. 70" />
+    <label>Gasttickets (Monatsziel)</label>
+    <input type="number" id="tgt-gt" step="0.5" placeholder="z.B. 30" />
+    <label>Neumitglieder (Monatsziel)</label>
+    <input type="number" id="tgt-nm" placeholder="z.B. 70" />
+    <button class="btn btn-primary" style="margin-top:16px;" onclick="saveTarget()">💾 Ziel speichern</button>
+  </div>
+  <div id="targets-list"></div>
+</div>
+
+<!-- ══════════════════ EINSTELLUNGEN ══════════════════ -->
+<div class="screen" id="screen-settings">
+  <div class="card">
+    <div class="card-title">Quoten &amp; Grundeinstellungen</div>
+    <label>Standort</label>
+    <select id="set-location" onchange="loadSettings()"></select>
+    <label>Erscheinquote (%)</label>
+    <input type="number" id="set-erschein" min="0" max="100" placeholder="70" />
+    <label>Abschlussquote (%)</label>
+    <input type="number" id="set-abschluss" min="0" max="100" placeholder="70" />
+    <button class="btn btn-primary" style="margin-top:16px;" onclick="saveSettings()">💾 Speichern</button>
+  </div>
+  <div style="background:var(--primary-light);border-radius:var(--radius-sm);padding:14px;font-size:13px;color:var(--primary-dark);">
+    <strong>So funktionieren die Quoten:</strong><br>
+    Beispiel: Monatsziel 70 Abschlüsse, Erscheinquote 70%, Abschlussquote 70%<br>
+    → Benötigte Termine: 70 ÷ 0.70 ÷ 0.70 = ~143 Termine planen
+  </div>
+</div>
+
+<!-- ══════════════════ ADMIN ══════════════════ -->
+<div class="screen" id="screen-admin">
+  <div class="card">
+    <div class="card-title">➕ Neue Mitarbeiterin</div>
+    <label>Name</label>
+    <input type="text" id="new-emp-name" placeholder="Vorname" />
+    <label>Standort</label>
+    <select id="new-emp-loc"></select>
+    <label>PIN (4-stellig)</label>
+    <input type="text" id="new-emp-pin" maxlength="4" placeholder="z.B. 1234" inputmode="numeric" />
+    <div style="display:flex;gap:16px;margin-top:10px;">
+      <label style="margin:0;display:flex;align-items:center;gap:6px;"><input type="checkbox" id="new-emp-mgr" style="width:auto;" /> Manager</label>
+      <label style="margin:0;display:flex;align-items:center;gap:6px;"><input type="checkbox" id="new-emp-admin" style="width:auto;" /> Admin</label>
+    </div>
+    <button class="btn btn-primary" style="margin-top:16px;" onclick="createEmployee()">Anlegen</button>
+  </div>
+  <div class="card-title">Bestehende Mitarbeiterinnen</div>
+  <div id="admin-emp-list"><div class="spinner">Lade …</div></div>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+// ══════════════════════════════════════════════════
+// KONFIGURATION
+// ══════════════════════════════════════════════════
+const SUPABASE_URL = 'sb_publishable_MItF8GftzyrPvEsvcCpvPQ_yc_k9v7y';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imthc3Roc25hZ3lxeHprbnpybXFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0NjQxMTgsImV4cCI6MjA5NjA0MDExOH0.QsqlSXBP9tw63hW_CBqrpB1DsM3xaMkokqQePhGgVew';
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ══════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════
+let currentEmployee = null;
+let screenHistory   = [];
+let _locsCache      = null;
+let _empsCache      = null;
+let _moodVals       = { club: 0, team: 0, ich: 0 };
+let _stepperVals    = {};
+let _myStatsTab     = 'month';
+
+// ══════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════
+function navigate(screenId) {
+  const cur = document.querySelector('.screen.active');
+  if (cur) { screenHistory.push(cur.id); cur.classList.remove('active'); }
+  document.getElementById(screenId).classList.add('active');
+  updateHeader(screenId);
+  window.scrollTo(0,0);
+}
+function goBack() {
+  if (!screenHistory.length) return;
+  document.querySelector('.screen.active')?.classList.remove('active');
+  const prev = screenHistory.pop();
+  document.getElementById(prev).classList.add('active');
+  updateHeader(prev);
+  window.scrollTo(0,0);
+}
+function updateHeader(id) {
+  const titles = {
+    'screen-login': 'juka dojo', 'screen-menu': 'juka dojo',
+    'screen-tagesreport': 'Tagesreport', 'screen-abschluss': 'Abschluss erfassen',
+    'screen-prospect': 'Nichtabschluss', 'screen-gastticket': 'Gastticket',
+    'screen-my-stats': 'Meine Übersicht', 'screen-dashboard': 'Dashboard',
+    'screen-closings-list': 'Abschlussliste', 'screen-prospects-list': 'Nichtabschlussliste',
+    'screen-gt-list': 'Gastticket-Liste', 'screen-targets': 'Monatsziele',
+    'screen-settings': 'Grundeinstellungen', 'screen-admin': 'Mitarbeiterverwaltung',
+  };
+  document.getElementById('header-title').textContent = titles[id] || 'juka dojo';
+  const sub = currentEmployee ? `${currentEmployee.name} · ${currentEmployee.location}` : '';
+  document.getElementById('header-sub').textContent = sub;
+  const noBack = ['screen-login','screen-menu'];
+  document.getElementById('btn-back').style.display = noBack.includes(id) ? 'none' : 'block';
+}
+
+// ══════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', async () => {
+  await loadLocs();
+  await loadEmps();
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('tr-date').value = today;
+  document.getElementById('ab-date').value = today;
+  document.getElementById('pr-date').value = today;
+  document.getElementById('gt-date').value = today;
+
+  const now = new Date();
+  document.getElementById('dash-week').value  = getISOWeekString(now);
+  document.getElementById('dash-month').value = now.toISOString().slice(0,7);
+  document.getElementById('cl-month').value   = now.toISOString().slice(0,7);
+  document.getElementById('cl-week').value    = getISOWeekString(now);
+  document.getElementById('pl-month').value   = now.toISOString().slice(0,7);
+  document.getElementById('gtl-month').value  = now.toISOString().slice(0,7);
+  document.getElementById('tgt-month').value  = now.toISOString().slice(0,7);
+
+  buildMoodRows();
+  initSteppers();
+  updateHeader('screen-login');
+});
+
+async function loadLocs() {
+  const { data } = await db.from('locations').select('*').order('name');
+  _locsCache = data || [];
+  const selIds = ['dash-location','cl-location','pl-location','gtl-location',
+                  'tgt-location','set-location','new-emp-loc'];
+  selIds.forEach(sid => {
+    const sel = document.getElementById(sid);
+    if (!sel) return;
+    const hasAll = sel.querySelector('option[value=""]');
+    _locsCache.forEach(l => {
+      const o = document.createElement('option');
+      o.value = l.id; o.textContent = l.name; sel.appendChild(o);
+    });
+  });
+}
+
+async function loadEmps() {
+  const { data } = await db.from('employees').select('*, locations(name)').order('name');
+  _empsCache = data || [];
+  // Login dropdown – only active
+  const sel = document.getElementById('select-employee');
+  sel.innerHTML = '<option value="">– bitte auswählen –</option>';
+  _empsCache.filter(e => e.active !== false).forEach(e => {
+    const o = document.createElement('option');
+    o.value = JSON.stringify({ id:e.id, name:e.name, location:e.locations?.name,
+      location_id:e.location_id, is_manager:e.is_manager, is_admin:e.is_admin, pin:e.pin });
+    o.textContent = `${e.name} (${e.locations?.name || '–'})`;
+    sel.appendChild(o);
+  });
+  // Dashboard employee filter
+  ['dash-employee'].forEach(sid => {
+    const s = document.getElementById(sid);
+    if (!s) return;
+    s.innerHTML = '<option value="">Alle Mitarbeiterinnen</option>';
+    _empsCache.filter(e => e.active !== false).forEach(e => {
+      const o = document.createElement('option'); o.value = e.id; o.textContent = e.name; s.appendChild(o);
+    });
+  });
+}
+
+// ══════════════════════════════════════════════════
+// LOGIN / PIN
+// ══════════════════════════════════════════════════
+function onEmpChange() {
+  const val = document.getElementById('select-employee').value;
+  document.getElementById('display-location').value = val ? JSON.parse(val).location || '–' : '';
+}
+let _pin = '';
+function showPinPad() {
+  const val = document.getElementById('select-employee').value;
+  if (!val) { showToast('Bitte Mitarbeiter/in wählen'); return; }
+  _pin = ''; updatePinDots();
+  document.getElementById('pin-error').textContent = '';
+  document.getElementById('pin-title').textContent = `PIN für ${JSON.parse(val).name}`;
+  document.getElementById('login-step-1').style.display = 'none';
+  document.getElementById('login-step-2').style.display = 'block';
+}
+function pinBack() {
+  _pin = ''; updatePinDots();
+  document.getElementById('login-step-2').style.display = 'none';
+  document.getElementById('login-step-1').style.display = 'block';
+}
+function pinKey(d) { if (_pin.length >= 4) return; _pin += d; updatePinDots(); if (_pin.length === 4) setTimeout(doLogin, 150); }
+function pinDelete() { _pin = _pin.slice(0,-1); updatePinDots(); }
+function updatePinDots() { for (let i=0;i<4;i++) document.getElementById(`pd${i}`).classList.toggle('filled', i < _pin.length); }
+
+async function doLogin() {
+  const val = document.getElementById('select-employee').value;
+  if (!val) return;
+  const emp = JSON.parse(val);
+  const { data } = await db.from('employees').select('pin').eq('id', emp.id).single();
+  const stored = data?.pin;
+  if (stored && _pin !== stored) { showPinError('Falscher PIN'); return; }
+  if (!stored && _pin !== '0000') { showPinError('PIN: 0000 (noch nicht gesetzt)'); return; }
+
+  currentEmployee = emp;
+  _pin = ''; updatePinDots();
+  document.getElementById('login-step-2').style.display = 'none';
+  document.getElementById('login-step-1').style.display = 'block';
+
+  document.getElementById('menu-manager').style.display = (emp.is_manager || emp.is_admin) ? 'block' : 'none';
+  document.getElementById('menu-admin').style.display   = emp.is_admin ? 'block' : 'none';
+
+  const opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+  document.getElementById('menu-date').textContent = new Date().toLocaleDateString('de-DE', opts);
+
+  await loadMenuTargetCard();
+  navigate('screen-menu');
+}
+
+function showPinError(msg) {
+  document.getElementById('pin-error').textContent = msg;
+  const s2 = document.getElementById('login-step-2');
+  s2.style.transform = 'translateX(-8px)';
+  setTimeout(() => s2.style.transform = 'translateX(8px)', 80);
+  setTimeout(() => s2.style.transform = 'translateX(-4px)', 160);
+  setTimeout(() => s2.style.transform = '', 240);
+  _pin = ''; setTimeout(updatePinDots, 300);
+}
+
+function doLogout() {
+  currentEmployee = null; screenHistory = [];
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-login').classList.add('active');
+  updateHeader('screen-login');
+}
+
+// ══════════════════════════════════════════════════
+// MENU TARGET CARD
+// ══════════════════════════════════════════════════
+async function loadMenuTargetCard() {
+  if (!currentEmployee) return;
+  const now = new Date();
+  const year = now.getFullYear(), month = now.getMonth()+1;
+  const { data: tgt } = await db.from('targets')
+    .select('abschluesse, gasttickets_soll')
+    .eq('location_id', currentEmployee.location_id)
+    .eq('year', year).eq('month', month).single();
+  if (!tgt || !tgt.abschluesse) { document.getElementById('menu-target-card').style.display = 'none'; return; }
+
+  const wdTotal = countWorkingDays(year, month);
+  const wdSoFar = countWorkingDaysUntil(year, month, now.getDate());
+  const sollHeute = Math.round((tgt.abschluesse / wdTotal) * wdSoFar);
+
+  const from = `${year}-${String(month).padStart(2,'0')}-01`;
+  const to   = now.toISOString().split('T')[0];
+  const { data: reps } = await db.from('daily_reports')
+    .select('abschluesse_gesamt')
+    .eq('employee_id', currentEmployee.id)
+    .gte('date', from).lte('date', to);
+  const istAb = (reps||[]).reduce((s,r) => s + (r.abschluesse_gesamt||0), 0);
+  const pct = sollHeute > 0 ? Math.round((istAb/sollHeute)*100) : 100;
+  const cls = pct >= 90 ? 'green' : pct >= 70 ? 'yellow' : 'red';
+
+  document.getElementById('menu-target-card').style.display = 'block';
+  document.getElementById('menu-target-content').innerHTML = `
+    <div class="info-row"><span class="info-label">Monatsziel Abschlüsse</span><span class="info-value">${tgt.abschluesse}</span></div>
+    <div class="info-row"><span class="info-label">Soll heute (kumuliert)</span><span class="info-value">${sollHeute}</span></div>
+    <div class="info-row"><span class="info-label">IST Abschlüsse</span><span class="info-value" style="color:var(--primary)">${istAb}</span></div>
+    <div class="progress-bar"><div class="progress-fill ${cls}" style="width:${Math.min(pct,100)}%"></div></div>
+    <div style="font-size:12px;color:var(--muted);margin-top:6px;text-align:right;">${pct}% des Tagessolls erreicht</div>`;
+}
+
+// ══════════════════════════════════════════════════
+// STEPPER & MOOD
+// ══════════════════════════════════════════════════
+const STEPPERS = ['tr-bt-ersch','tr-bt-ab','tr-wi-ges','tr-wi-term','tr-wi-ab',
+  'tr-ak-ges','tr-ak-test','tr-ak-sofort','tr-ak-feed','tr-ak-feedab',
+  'tr-gt-ber','tr-gt-ab','tr-gt-gen','tr-gt-verz','tr-ab-ges',
+  'tr-calls-ges','tr-calls-err','tr-calls-term','ab-gt'];
+
+function initSteppers() { STEPPERS.forEach(id => { _stepperVals[id] = 0; }); }
+function step(id, delta) {
+  _stepperVals[id] = Math.max(0, (_stepperVals[id]||0) + delta);
+  document.getElementById(id).textContent = _stepperVals[id];
+}
+function getStep(id) { return _stepperVals[id] || 0; }
+function resetSteppers() { STEPPERS.forEach(id => { _stepperVals[id] = 0; document.getElementById(id) && (document.getElementById(id).textContent = '0'); }); }
+
+function buildMoodRows() {
+  ['club','team','ich'].forEach(type => {
+    const row = document.getElementById(`mood-${type}`);
+    if (!row) return;
+    for (let i=1;i<=7;i++) {
+      const btn = document.createElement('button');
+      btn.type = 'button'; btn.textContent = i; btn.className = 'mood-btn';
+      btn.onclick = () => { _moodVals[type] = i; row.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); };
+      row.appendChild(btn);
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════
+// TAGESREPORT
+// ══════════════════════════════════════════════════
+async function submitTagesreport(e) {
+  e.preventDefault();
+  const row = {
+    date: document.getElementById('tr-date').value,
+    employee_id: currentEmployee.id,
+    location_id: currentEmployee.location_id,
+    stunden_beraterschicht: parseFloat(document.getElementById('tr-stunden').value) || 0,
+    bt_erschienen:    getStep('tr-bt-ersch'),
+    bt_abschluesse:   getStep('tr-bt-ab'),
+    walkin_gesamt:    getStep('tr-wi-ges'),
+    walkin_terminiert:getStep('tr-wi-term'),
+    walkin_abschluesse:getStep('tr-wi-ab'),
+    aktion_gesamt:    getStep('tr-ak-ges'),
+    aktion_tester:    getStep('tr-ak-test'),
+    aktion_sofortabschluss: getStep('tr-ak-sofort'),
+    aktion_feedback:  getStep('tr-ak-feed'),
+    aktion_feedback_ab: getStep('tr-ak-feedab'),
+    gt_beratungen:    getStep('tr-gt-ber'),
+    gt_abschluesse:   getStep('tr-gt-ab'),
+    gt_generiert:     getStep('tr-gt-gen'),
+    gt_verzicht:      getStep('tr-gt-verz'),
+    abschluesse_gesamt: getStep('tr-ab-ges'),
+    calls_gesamt:     getStep('tr-calls-ges'),
+    calls_erreicht:   getStep('tr-calls-err'),
+    calls_terminiert: getStep('tr-calls-term'),
+    stimmung_club: _moodVals.club || null,
+    stimmung_team: _moodVals.team || null,
+    stimmung_ich:  _moodVals.ich  || null,
+    bemerkungen:   document.getElementById('tr-bemerkungen').value || null,
+  };
+  const { error } = await db.from('daily_reports').upsert([row], { onConflict: 'date,employee_id' });
+  if (error) { showToast('❌ Fehler: ' + error.message); return; }
+  showToast('✅ Tagesreport gespeichert!');
+  resetSteppers(); _moodVals = {club:0,team:0,ich:0};
+  document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('tr-bemerkungen').value = '';
+  goBack();
+}
+
+// ══════════════════════════════════════════════════
+// ABSCHLUSS
+// ══════════════════════════════════════════════════
+async function submitAbschluss(e) {
+  e.preventDefault();
+  const row = {
+    date: document.getElementById('ab-date').value,
+    employee_id: currentEmployee.id,
+    location_id: currentEmployee.location_id,
+    vorname:        document.getElementById('ab-vorname').value,
+    nachname:       document.getElementById('ab-nachname').value,
+    plz:            document.getElementById('ab-plz').value || null,
+    email:          document.getElementById('ab-email').value || null,
+    grundtarif:     parseFloat(document.getElementById('ab-grundtarif').value) || null,
+    beitrag_gesamt: parseFloat(document.getElementById('ab-beitrag').value) || null,
+    module:         document.getElementById('ab-module').value || null,
+    startpaket:     parseFloat(document.getElementById('ab-startpaket').value) || null,
+    laufzeit:       parseInt(document.getElementById('ab-laufzeit').value) || null,
+    werbung:        document.getElementById('ab-werbung').value || null,
+    gasttickets:    getStep('ab-gt'),
+    bemerkung:      document.getElementById('ab-bemerkung').value || null,
+  };
+  const { error } = await db.from('closings').insert([row]);
+  if (error) { showToast('❌ Fehler: ' + error.message); return; }
+  showToast('✅ Abschluss gespeichert!');
+  document.getElementById('form-abschluss').reset();
+  document.getElementById('ab-date').value = new Date().toISOString().split('T')[0];
+  _stepperVals['ab-gt'] = 0; document.getElementById('ab-gt').textContent = '0';
+  goBack();
+}
+
+// ══════════════════════════════════════════════════
+// NICHTABSCHLUSS
+// ══════════════════════════════════════════════════
+async function submitProspect(e) {
+  e.preventDefault();
+  const row = {
+    date: document.getElementById('pr-date').value,
+    employee_id: currentEmployee.id,
+    location_id: currentEmployee.location_id,
+    vorname:   document.getElementById('pr-vorname').value || null,
+    nachname:  document.getElementById('pr-nachname').value || null,
+    email:     document.getElementById('pr-email').value || null,
+    plz:       document.getElementById('pr-plz').value || null,
+    werbung:   document.getElementById('pr-werbung').value || null,
+    laufzeit:  parseInt(document.getElementById('pr-laufzeit').value) || null,
+    kundenziel: document.getElementById('pr-ziel').value || null,
+    grund_nichtabschluss: document.getElementById('pr-grund').value || null,
+    neuer_termin:  document.getElementById('pr-termin').value || null,
+    wiedervorlage: document.getElementById('pr-wiedervorlage').value || null,
+    gastticket: document.getElementById('pr-gt').checked,
+  };
+  const { error } = await db.from('prospects').insert([row]);
+  if (error) { showToast('❌ Fehler: ' + error.message); return; }
+  showToast('✅ Nichtabschluss gespeichert!');
+  document.getElementById('form-prospect').reset();
+  document.getElementById('pr-date').value = new Date().toISOString().split('T')[0];
+  goBack();
+}
+
+// ══════════════════════════════════════════════════
+// GASTTICKET
+// ══════════════════════════════════════════════════
+async function submitGastticket(e) {
+  e.preventDefault();
+  const row = {
+    date: document.getElementById('gt-date').value,
+    employee_id: currentEmployee.id,
+    location_id: currentEmployee.location_id,
+    mitglied_name: document.getElementById('gt-name').value,
+    bemerkung:     document.getElementById('gt-bemerkung').value || null,
+  };
+  const { error } = await db.from('gasttickets').insert([row]);
+  if (error) { showToast('❌ Fehler: ' + error.message); return; }
+  showToast('✅ Gastticket gespeichert!');
+  document.getElementById('form-gastticket').reset();
+  document.getElementById('gt-date').value = new Date().toISOString().split('T')[0];
+  goBack();
+}
+
+// ══════════════════════════════════════════════════
+// MEINE ÜBERSICHT
+// ══════════════════════════════════════════════════
+async function loadMyStats() {
+  navigate('screen-my-stats');
+  _myStatsTab = 'month';
+  document.getElementById('mst-tab-month').classList.add('active');
+  document.getElementById('mst-tab-last').classList.remove('active');
+  await renderMyStats();
+}
+
+function switchMyStats(tab) {
+  _myStatsTab = tab;
+  document.getElementById('mst-tab-month').classList.toggle('active', tab==='month');
+  document.getElementById('mst-tab-last').classList.toggle('active', tab==='last');
+  renderMyStats();
+}
+
+async function renderMyStats() {
+  const content = document.getElementById('my-stats-content');
+  content.innerHTML = '<div class="spinner">Lade …</div>';
+  const now = new Date();
+  let year = now.getFullYear(), month = now.getMonth()+1;
+  if (_myStatsTab === 'last') { month--; if (month===0) { month=12; year--; } }
+  const from = `${year}-${String(month).padStart(2,'0')}-01`;
+  const to   = new Date(year, month, 0).toISOString().split('T')[0];
+
+  const [{ data: reps }, { data: cls }, { data: gts }, { data: tgt }] = await Promise.all([
+    db.from('daily_reports').select('*').eq('employee_id', currentEmployee.id).gte('date', from).lte('date', to),
+    db.from('closings').select('*').eq('employee_id', currentEmployee.id).gte('date', from).lte('date', to),
+    db.from('gasttickets').select('*').eq('employee_id', currentEmployee.id).gte('date', from).lte('date', to),
+    db.from('targets').select('*').eq('location_id', currentEmployee.location_id).eq('year', year).eq('month', month).single(),
+  ]);
+
+  const totAb    = (reps||[]).reduce((s,r) => s+(r.abschluesse_gesamt||0), 0);
+  const totBtErr = (reps||[]).reduce((s,r) => s+(r.bt_erschienen||0), 0);
+  const totBtAb  = (reps||[]).reduce((s,r) => s+(r.bt_abschluesse||0), 0);
+  const totGtGen = (reps||[]).reduce((s,r) => s+(r.gt_generiert||0), 0);
+  const totCalls = (reps||[]).reduce((s,r) => s+(r.calls_gesamt||0), 0);
+
+  const sollAb = tgt?.abschluesse || 0;
+  const sollGt = tgt?.gasttickets_soll || 0;
+  const wdTotal = countWorkingDays(year, month);
+  const wdSoFar = _myStatsTab === 'month' ? countWorkingDaysUntil(year, month, now.getDate()) : wdTotal;
+  const sollAbHeute = sollAb > 0 ? Math.round((sollAb/wdTotal)*wdSoFar) : 0;
+
+  const pctAb = sollAbHeute > 0 ? Math.round((totAb/sollAbHeute)*100) : null;
+  const pctBt = totBtErr > 0 ? Math.round((totBtAb/totBtErr)*100) : null;
+  const monthName = new Date(year, month-1).toLocaleDateString('de-DE', {month:'long', year:'numeric'});
+
+  let html = `<div style="font-size:14px;font-weight:700;color:var(--muted);margin-bottom:12px;">${monthName}</div>`;
+
+  // Abschlüsse
+  html += `<div class="card">
+    <div class="card-title">Abschlüsse</div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-val">${totAb}</div><div class="stat-label">IST</div>${sollAb?`<div class="stat-soll">Ziel: ${sollAb}</div>`:''}</div>
+      <div class="stat-card"><div class="stat-val">${sollAbHeute||'–'}</div><div class="stat-label">Soll kumuliert</div><div class="stat-soll">bis heute</div></div>
+    </div>`;
+  if (pctAb !== null) {
+    const cls = pctAb>=90?'green':pctAb>=70?'yellow':'red';
+    html += `<div class="progress-bar"><div class="progress-fill ${cls}" style="width:${Math.min(pctAb,100)}%"></div></div>
+    <div style="font-size:12px;color:var(--muted);text-align:right;margin-top:4px;">${pctAb}% des Solls</div>`;
+  }
+  html += `</div>`;
+
+  // BT & Abschlussquote
+  html += `<div class="card">
+    <div class="card-title">Beratungstermine</div>
+    <div class="info-row"><span class="info-label">BT erschienen</span><span class="info-value">${totBtErr}</span></div>
+    <div class="info-row"><span class="info-label">BT Abschlüsse</span><span class="info-value">${totBtAb}</span></div>
+    <div class="info-row"><span class="info-label">Abschlussquote BT</span><span class="info-value">${pctBt !== null ? pctBt+'%' : '–'}</span></div>
+  </div>`;
+
+  // Gasttickets
+  html += `<div class="card">
+    <div class="card-title">Gasttickets</div>
+    <div class="info-row"><span class="info-label">Generiert</span><span class="info-value">${totGtGen}</span></div>
+    <div class="info-row"><span class="info-label">Geber eingetragen</span><span class="info-value">${(gts||[]).length}</span></div>
+    ${sollGt?`<div class="info-row"><span class="info-label">Monatsziel</span><span class="info-value">${sollGt}</span></div>`:''}
+  </div>`;
+
+  // Calls
+  html += `<div class="card">
+    <div class="card-title">Calls</div>
+    <div class="info-row"><span class="info-label">Gesamt</span><span class="info-value">${totCalls}</span></div>
+    <div class="info-row"><span class="info-label">Abschlüsse (Monat)</span><span class="info-value">${(cls||[]).length}</span></div>
+  </div>`;
+
+  content.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════════
+function onDashFilterChange() {
+  const period = document.getElementById('dash-period').value;
+  document.getElementById('dash-kw-picker').style.display   = period === 'kw' ? 'block' : 'none';
+  document.getElementById('dash-month-picker').style.display = period === 'month' ? 'block' : 'none';
+  loadDashboard();
+}
+
+async function loadDashboard() {
+  navigate('screen-dashboard');
+  const content = document.getElementById('dashboard-content');
+  content.innerHTML = '<div class="spinner">Lade …</div>';
+
+  const period = document.getElementById('dash-period').value;
+  const locId  = document.getElementById('dash-location').value;
+  const empId  = document.getElementById('dash-employee').value;
+
+  let from, to;
+  const now = new Date();
+  if (period === 'kw') {
+    const weekStr = document.getElementById('dash-week').value;
+    if (!weekStr) { content.innerHTML = '<div class="spinner">KW wählen …</div>'; return; }
+    [from, to] = getWeekRange(weekStr);
+  } else if (period === 'month') {
+    const ms = document.getElementById('dash-month').value;
+    if (!ms) { content.innerHTML = '<div class="spinner">Monat wählen …</div>'; return; }
+    const [y,m] = ms.split('-').map(Number);
+    from = `${y}-${String(m).padStart(2,'0')}-01`;
+    to   = new Date(y,m,0).toISOString().split('T')[0];
+  } else {
+    from = `${now.getFullYear()}-01-01`;
+    to   = now.toISOString().split('T')[0];
+  }
+
+  let rq = db.from('daily_reports').select('*, employees(name, locations(name))').gte('date', from).lte('date', to);
+  if (locId) rq = rq.eq('location_id', locId);
+  if (empId) rq = rq.eq('employee_id', empId);
+
+  const { data: reps } = await rq;
+  if (!reps) { content.innerHTML = '<div class="spinner">Fehler.</div>'; return; }
+
+  // Aggregate per employee
+  const empMap = {};
+  reps.forEach(r => {
+    const key = r.employee_id;
+    if (!empMap[key]) empMap[key] = { name: r.employees?.name||'?', location: r.employees?.locations?.name||'–',
+      ab:0, bt_err:0, bt_ab:0, wi:0, wi_ab:0, ak:0, ak_ab:0, gt_gen:0, gt_ab:0, calls:0, days:0 };
+    const em = empMap[key];
+    em.ab     += r.abschluesse_gesamt||0;
+    em.bt_err += r.bt_erschienen||0;
+    em.bt_ab  += r.bt_abschluesse||0;
+    em.wi     += r.walkin_gesamt||0;
+    em.wi_ab  += r.walkin_abschluesse||0;
+    em.ak     += r.aktion_gesamt||0;
+    em.ak_ab  += r.aktion_sofortabschluss||0;
+    em.gt_gen += r.gt_generiert||0;
+    em.gt_ab  += r.gt_abschluesse||0;
+    em.calls  += r.calls_gesamt||0;
+    em.days++;
+  });
+
+  const emps = Object.values(empMap).sort((a,b) => b.ab - a.ab);
+  if (!emps.length) { content.innerHTML = '<div class="card" style="text-align:center;padding:30px;color:var(--muted);">Keine Daten für diesen Zeitraum.</div>'; return; }
+
+  const pct = (a,b) => b>0 ? Math.round((a/b)*100)+'%' : '–';
+  const totals = emps.reduce((t,em) => {
+    t.ab+=em.ab; t.bt_err+=em.bt_err; t.bt_ab+=em.bt_ab; t.wi+=em.wi; t.gt_gen+=em.gt_gen; t.calls+=em.calls; return t;
+  }, {ab:0, bt_err:0, bt_ab:0, wi:0, gt_gen:0, calls:0});
+
+  let html = `<div class="card">
+    <div class="card-title">Team gesamt · ${from.slice(0,7) === to.slice(0,7) ? from.slice(0,7) : from+' – '+to}</div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-val" style="font-size:22px;">${totals.ab}</div><div class="stat-label">Abschlüsse</div></div>
+      <div class="stat-card"><div class="stat-val" style="font-size:22px;">${pct(totals.bt_ab,totals.bt_err)}</div><div class="stat-label">BT-Quote</div></div>
+      <div class="stat-card"><div class="stat-val" style="font-size:22px;">${totals.gt_gen}</div><div class="stat-label">Gasttickets</div></div>
+      <div class="stat-card"><div class="stat-val" style="font-size:22px;">${totals.calls}</div><div class="stat-label">Calls</div></div>
+    </div>
+  </div>`;
+
+  emps.forEach(em => {
+    html += `<div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div><div style="font-weight:700;font-size:16px;">${em.name}</div><div style="font-size:12px;color:var(--muted);">${em.location}</div></div>
+        <div style="font-size:24px;font-weight:800;color:var(--primary);">${em.ab}</div>
+      </div>
+      <div class="info-row"><span class="info-label">BT erschienen / Abschl.</span><span class="info-value">${em.bt_err} / ${em.bt_ab} (${pct(em.bt_ab,em.bt_err)})</span></div>
+      <div class="info-row"><span class="info-label">Walk-Ins / Abschl.</span><span class="info-value">${em.wi} / ${em.wi_ab} (${pct(em.wi_ab,em.wi)})</span></div>
+      <div class="info-row"><span class="info-label">Gasttickets generiert</span><span class="info-value">${em.gt_gen}</span></div>
+      <div class="info-row"><span class="info-label">Calls</span><span class="info-value">${em.calls}</span></div>
+      <div class="info-row"><span class="info-label">Reporttage</span><span class="info-value">${em.days}</span></div>
+    </div>`;
+  });
+
+  content.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════
+// ABSCHLUSSLISTE
+// ══════════════════════════════════════════════════
+function setupClosingFilter() {
+  document.getElementById('cl-period').addEventListener('change', function() {
+    const isKw = this.value === 'kw';
+    document.getElementById('cl-month').style.display = isKw ? 'none' : 'block';
+    document.getElementById('cl-week').style.display  = isKw ? 'block' : 'none';
+    loadClosingsList();
+  });
+}
+
+async function loadClosingsList() {
+  navigate('screen-closings-list');
+  const content = document.getElementById('closings-list-content');
+  content.innerHTML = '<div class="spinner">Lade …</div>';
+
+  const locId  = document.getElementById('cl-location').value;
+  const empId  = document.getElementById('cl-employee')?.value || '';
+  const period = document.getElementById('cl-period').value;
+  let from, to;
+  if (period === 'kw') {
+    const w = document.getElementById('cl-week').value;
+    if (!w) { content.innerHTML = '<div class="spinner">KW wählen …</div>'; return; }
+    [from, to] = getWeekRange(w);
+  } else {
+    const ms = document.getElementById('cl-month').value;
+    if (!ms) { content.innerHTML = '<div class="spinner">Monat wählen …</div>'; return; }
+    const [y,m] = ms.split('-').map(Number);
+    from = `${y}-${String(m).padStart(2,'0')}-01`;
+    to   = new Date(y,m,0).toISOString().split('T')[0];
+  }
+
+  let q = db.from('closings').select('*, employees(name)').gte('date', from).lte('date', to).order('date', {ascending:false});
+  if (locId) q = q.eq('location_id', locId);
+  if (empId) q = q.eq('employee_id', empId);
+
+  const { data } = await q;
+  if (!data?.length) { content.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);">Keine Abschlüsse gefunden.</div>'; return; }
+
+  const total = data.reduce((s,r) => s+(r.beitrag_gesamt||0), 0);
+  let html = `<div style="font-size:13px;color:var(--muted);margin-bottom:10px;">${data.length} Abschlüsse · ${total.toFixed(2)} € Gesamtbeitrag</div>`;
+
+  data.forEach((r, i) => {
+    const kw = getKW(new Date(r.date));
+    html += `<div class="list-item" onclick="document.getElementById('cd-${i}').classList.toggle('open')">
+      <div class="list-item-header">
+        <div>
+          <span class="kw-chip">KW ${kw}</span>
+          <span class="list-item-name">${r.vorname} ${r.nachname}</span>
+        </div>
+        <span class="list-item-badge">${r.beitrag_gesamt ? r.beitrag_gesamt.toFixed(2)+' €' : '–'}</span>
+      </div>
+      <div class="list-item-meta">${r.date} · ${r.employees?.name||'?'} · ${r.module||'–'} · ${r.laufzeit||'–'} Monate</div>
+      <div class="closing-detail" id="cd-${i}">
+        <div class="info-row"><span class="info-label">Grundtarif</span><span class="info-value">${r.grundtarif ? r.grundtarif+' €' : '–'}</span></div>
+        <div class="info-row"><span class="info-label">Startpaket</span><span class="info-value">${r.startpaket ? r.startpaket+' €' : '–'}</span></div>
+        <div class="info-row"><span class="info-label">PLZ</span><span class="info-value">${r.plz||'–'}</span></div>
+        <div class="info-row"><span class="info-label">E-Mail</span><span class="info-value" style="font-size:12px;">${r.email||'–'}</span></div>
+        <div class="info-row"><span class="info-label">Werbung</span><span class="info-value">${r.werbung||'–'}</span></div>
+        <div class="info-row"><span class="info-label">Gasttickets</span><span class="info-value">${r.gasttickets||0}</span></div>
+        ${r.bemerkung ? `<div style="font-size:12px;color:var(--muted);margin-top:6px;padding-top:6px;border-top:1px solid var(--border);">${r.bemerkung}</div>` : ''}
+      </div>
+    </div>`;
+  });
+  content.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════
+// NICHTABSCHLUSSLISTE
+// ══════════════════════════════════════════════════
+async function loadProspectsList() {
+  navigate('screen-prospects-list');
+  const content = document.getElementById('prospects-list-content');
+  content.innerHTML = '<div class="spinner">Lade …</div>';
+  const locId = document.getElementById('pl-location').value;
+  const ms    = document.getElementById('pl-month').value;
+  if (!ms) { content.innerHTML = '<div class="spinner">Monat wählen …</div>'; return; }
+  const [y,m] = ms.split('-').map(Number);
+  const from = `${y}-${String(m).padStart(2,'0')}-01`;
+  const to   = new Date(y,m,0).toISOString().split('T')[0];
+
+  let q = db.from('prospects').select('*, employees(name)').gte('date', from).lte('date', to).order('date', {ascending:false});
+  if (locId) q = q.eq('location_id', locId);
+  const { data } = await q;
+  if (!data?.length) { content.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);">Keine Einträge gefunden.</div>'; return; }
+
+  let html = `<div style="font-size:13px;color:var(--muted);margin-bottom:10px;">${data.length} Interessenten</div>`;
+  data.forEach(r => {
+    const name = [r.vorname, r.nachname].filter(Boolean).join(' ') || '(kein Name)';
+    const hasWiedervorlage = r.wiedervorlage && new Date(r.wiedervorlage) >= new Date();
+    html += `<div class="list-item">
+      <div class="list-item-header">
+        <div><div class="list-item-name">${name}</div></div>
+        ${hasWiedervorlage ? `<span class="list-item-badge">📅 ${r.wiedervorlage}</span>` : ''}
+      </div>
+      <div class="list-item-meta">${r.date} · ${r.employees?.name||'?'} · ${r.werbung||'–'}</div>
+      ${r.grund_nichtabschluss ? `<div style="font-size:13px;color:var(--muted);margin-top:4px;">„${r.grund_nichtabschluss}"</div>` : ''}
+      ${r.neuer_termin ? `<div style="font-size:12px;color:var(--primary);margin-top:4px;">Neuer Termin: ${r.neuer_termin}</div>` : ''}
+    </div>`;
+  });
+  content.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════
+// GASTTICKET-LISTE
+// ══════════════════════════════════════════════════
+async function loadGtList() {
+  navigate('screen-gt-list');
+  const content = document.getElementById('gt-list-content');
+  content.innerHTML = '<div class="spinner">Lade …</div>';
+  const locId = document.getElementById('gtl-location').value;
+  const ms    = document.getElementById('gtl-month').value;
+  if (!ms) { content.innerHTML = '<div class="spinner">Monat wählen …</div>'; return; }
+  const [y,m] = ms.split('-').map(Number);
+  const from = `${y}-${String(m).padStart(2,'0')}-01`;
+  const to   = new Date(y,m,0).toISOString().split('T')[0];
+
+  let q = db.from('gasttickets').select('*, employees(name)').gte('date', from).lte('date', to).order('date', {ascending:false});
+  if (locId) q = q.eq('location_id', locId);
+  const { data } = await q;
+  if (!data?.length) { content.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);">Keine Gasttickets gefunden.</div>'; return; }
+
+  let html = `<div style="font-size:13px;color:var(--muted);margin-bottom:10px;">${data.length} Gastticket-Geber</div>`;
+  data.forEach(r => {
+    html += `<div class="list-item">
+      <div class="list-item-header">
+        <div class="list-item-name">🎫 ${r.mitglied_name}</div>
+        <span style="font-size:12px;color:var(--muted);">${r.date}</span>
+      </div>
+      <div class="list-item-meta">${r.employees?.name||'?'}</div>
+      ${r.bemerkung ? `<div style="font-size:13px;color:var(--muted);margin-top:4px;">${r.bemerkung}</div>` : ''}
+    </div>`;
+  });
+  content.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════
+// MONATSZIELE
+// ══════════════════════════════════════════════════
+async function saveTarget() {
+  const locId = document.getElementById('tgt-location').value;
+  const ms    = document.getElementById('tgt-month').value;
+  if (!locId || !ms) { showToast('Bitte Standort und Monat wählen'); return; }
+  const [year, month] = ms.split('-').map(Number);
+  const row = {
+    location_id: locId, year, month,
+    abschluesse:      parseInt(document.getElementById('tgt-abschluesse').value) || 0,
+    gasttickets_soll: parseFloat(document.getElementById('tgt-gt').value) || 0,
+    neumitglieder:    parseInt(document.getElementById('tgt-nm').value) || 0,
+  };
+  const { error } = await db.from('targets').upsert([row], { onConflict: 'location_id,year,month' });
+  if (error) { showToast('❌ ' + error.message); return; }
+  showToast('✅ Ziel gespeichert!');
+
+  // Show working day breakdown
+  const wd = countWorkingDays(year, month);
+  const dailyAb = (row.abschluesse / wd).toFixed(1);
+  showToast(`✅ Gespeichert · Tagesziel: ${dailyAb} Abschl./Arbeitstag (${wd} AT)`);
+}
+
+// ══════════════════════════════════════════════════
+// EINSTELLUNGEN
+// ══════════════════════════════════════════════════
+async function loadSettings() {
+  const locId = document.getElementById('set-location').value;
+  if (!locId) return;
+  const { data } = await db.from('settings').select('key,value').eq('location_id', locId);
+  const map = {};
+  (data||[]).forEach(s => { map[s.key] = s.value; });
+  document.getElementById('set-erschein').value  = map['erscheinquote']  || 70;
+  document.getElementById('set-abschluss').value = map['abschlussquote'] || 70;
+}
+async function saveSettings() {
+  const locId = document.getElementById('set-location').value;
+  if (!locId) { showToast('Bitte Standort wählen'); return; }
+  const rows = [
+    { location_id: locId, key: 'erscheinquote',  value: document.getElementById('set-erschein').value  || '70' },
+    { location_id: locId, key: 'abschlussquote', value: document.getElementById('set-abschluss').value || '70' },
+  ];
+  const { error } = await db.from('settings').upsert(rows, { onConflict: 'location_id,key' });
+  if (error) { showToast('❌ ' + error.message); return; }
+  showToast('✅ Einstellungen gespeichert!');
+}
+
+// ══════════════════════════════════════════════════
+// ADMIN
+// ══════════════════════════════════════════════════
+async function loadAdmin() {
+  navigate('screen-admin');
+  const list = document.getElementById('admin-emp-list');
+  list.innerHTML = '<div class="spinner">Lade …</div>';
+  const { data: emps } = await db.from('employees').select('*, locations(name)').order('name');
+  if (!emps?.length) { list.innerHTML = '<div style="color:var(--muted);">Noch keine Mitarbeiter.</div>'; return; }
+
+  list.innerHTML = emps.map(emp => {
+    const id = emp.id.replace(/-/g,'_');
+    return `<div class="admin-card" id="ac-${id}">
+      <div class="admin-card-header" onclick="document.getElementById('ac-${id}').classList.toggle('open')">
+        <div>
+          <div style="font-weight:700;">${emp.name} ${emp.is_admin?'🔑':emp.is_manager?'👔':''}</div>
+          <div style="font-size:12px;color:var(--muted);">${emp.locations?.name||'–'} · ${emp.active===false?'⛔ Inaktiv':'Aktiv'}</div>
+        </div>
+        <span class="chevron">›</span>
+      </div>
+      <div class="admin-card-body">
+        <label style="margin-top:14px;">Name</label>
+        <input type="text" id="en-${id}" value="${emp.name}" />
+        <label>PIN</label>
+        <input type="text" id="ep-${id}" value="${emp.pin||''}" maxlength="4" inputmode="numeric" />
+        <label>Standort</label>
+        <select id="el-${id}">${(_locsCache||[]).map(l=>`<option value="${l.id}"${l.id===emp.location_id?' selected':''}>${l.name}</option>`).join('')}</select>
+        <div style="display:flex;gap:16px;margin-top:10px;">
+          <label style="margin:0;display:flex;align-items:center;gap:6px;"><input type="checkbox" id="em-${id}" style="width:auto;" ${emp.is_manager?'checked':''}/> Manager</label>
+          <label style="margin:0;display:flex;align-items:center;gap:6px;"><input type="checkbox" id="ea-${id}" style="width:auto;" ${emp.is_admin?'checked':''}/> Admin</label>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:14px;">
+          <button class="btn-sm btn-sm-primary" onclick="saveEmp('${emp.id}','${id}')">💾 Speichern</button>
+          <button class="btn-sm btn-sm-ghost" onclick="toggleEmpActive('${emp.id}',${emp.active!==false})">${emp.active===false?'✅ Aktivieren':'🚫 Deaktivieren'}</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function createEmployee() {
+  const name = document.getElementById('new-emp-name').value.trim();
+  const locId = document.getElementById('new-emp-loc').value;
+  const pin   = document.getElementById('new-emp-pin').value.trim();
+  if (!name || !locId) { showToast('Name und Standort erforderlich'); return; }
+  if (pin && pin.length !== 4) { showToast('PIN muss 4 Ziffern haben'); return; }
+  const { error } = await db.from('employees').insert([{
+    name, location_id: locId, pin: pin||null,
+    is_manager: document.getElementById('new-emp-mgr').checked,
+    is_admin:   document.getElementById('new-emp-admin').checked,
+    active: true
+  }]);
+  if (error) { showToast('❌ ' + error.message); return; }
+  showToast(`✅ ${name} angelegt`);
+  document.getElementById('new-emp-name').value = '';
+  document.getElementById('new-emp-pin').value = '';
+  await loadEmps(); await loadAdmin();
+}
+
+async function saveEmp(empId, safeId) {
+  const { error } = await db.from('employees').update({
+    name: document.getElementById(`en-${safeId}`).value,
+    pin:  document.getElementById(`ep-${safeId}`).value || null,
+    location_id: document.getElementById(`el-${safeId}`).value,
+    is_manager:  document.getElementById(`em-${safeId}`).checked,
+    is_admin:    document.getElementById(`ea-${safeId}`).checked,
+  }).eq('id', empId);
+  if (error) { showToast('❌ ' + error.message); return; }
+  showToast('✅ Gespeichert');
+  await loadEmps(); await loadAdmin();
+}
+
+async function toggleEmpActive(empId, currentlyActive) {
+  await db.from('employees').update({ active: !currentlyActive }).eq('id', empId);
+  showToast(currentlyActive ? '🚫 Deaktiviert' : '✅ Aktiviert');
+  await loadEmps(); await loadAdmin();
+}
+
+// ══════════════════════════════════════════════════
+// HILFSFUNKTIONEN
+// ══════════════════════════════════════════════════
+function countWorkingDays(year, month) {
+  let count = 0;
+  const d = new Date(year, month-1, 1);
+  while (d.getMonth() === month-1) {
+    const dow = d.getDay();
+    if (dow !== 0 && dow !== 6) count++;
+    d.setDate(d.getDate()+1);
+  }
+  return count;
+}
+function countWorkingDaysUntil(year, month, day) {
+  let count = 0;
+  const d = new Date(year, month-1, 1);
+  const end = new Date(year, month-1, day);
+  while (d <= end) {
+    const dow = d.getDay();
+    if (dow !== 0 && dow !== 6) count++;
+    d.setDate(d.getDate()+1);
+  }
+  return count;
+}
+function getISOWeekString(date) {
+  const d = new Date(date);
+  d.setHours(0,0,0,0); d.setDate(d.getDate()+3-(d.getDay()+6)%7);
+  const w = new Date(d.getFullYear(),0,4);
+  const week = Math.round(((d-w)/864e5+w.getDay()+6)/7);
+  return `${d.getFullYear()}-W${String(week).padStart(2,'0')}`;
+}
+function getWeekRange(weekStr) {
+  const [year, ww] = weekStr.split('-W').map(Number);
+  const jan4 = new Date(year, 0, 4);
+  const startOfWeek1 = new Date(jan4);
+  startOfWeek1.setDate(jan4.getDate() - (jan4.getDay()||7) + 1);
+  const from = new Date(startOfWeek1);
+  from.setDate(startOfWeek1.getDate() + (ww-1)*7);
+  const to = new Date(from); to.setDate(from.getDate()+6);
+  return [from.toISOString().split('T')[0], to.toISOString().split('T')[0]];
+}
+function getKW(date) {
+  const d = new Date(date);
+  d.setHours(0,0,0,0); d.setDate(d.getDate()+3-(d.getDay()+6)%7);
+  const w = new Date(d.getFullYear(),0,4);
+  return Math.round(((d-w)/864e5+w.getDay()+6)/7);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// Setup filter listeners
+document.addEventListener('DOMContentLoaded', () => {
+  setupClosingFilter();
+  document.getElementById('set-location').addEventListener('change', loadSettings);
+});
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
