@@ -408,7 +408,11 @@
     </button>
     <button class="menu-btn" onclick="navigate('screen-targets')">
       <span class="menu-icon">🎯</span>
-      <div><div class="menu-label">Monatsziele</div><div class="menu-desc">Abschlüsse &amp; Gasttickets planen</div></div>
+      <div><div class="menu-label">Standort-Monatsziele</div><div class="menu-desc">Abschlüsse &amp; Gasttickets planen</div></div>
+    </button>
+    <button class="menu-btn" onclick="loadEmpTargets()">
+      <span class="menu-icon">👤</span>
+      <div><div class="menu-label">Mitarbeiter-Ziele</div><div class="menu-desc">Individuelle Monatsziele pro MA</div></div>
     </button>
     <button class="menu-btn" onclick="navigate('screen-settings')">
       <span class="menu-icon">🔧</span>
@@ -735,6 +739,15 @@
 </div>
 
 <!-- ══════════════════ ADMIN ══════════════════ -->
+<!-- ════════════════════════ MITARBEITER-ZIELE ════════════════════════ -->
+<div class="screen" id="screen-emp-targets">
+  <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+    <select id="et-location" class="input" style="flex:1;" onchange="loadEmpTargetsData()"></select>
+    <select id="et-month" class="input" style="width:130px;" onchange="loadEmpTargetsData()"></select>
+  </div>
+  <div id="et-content"></div>
+</div>
+
 <!-- ════════════════════════ COCKPIT ════════════════════════ -->
 <div class="screen" id="screen-cockpit">
   <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
@@ -814,6 +827,7 @@ function updateHeader(id) {
     'screen-gt-list': 'Gastticket-Liste', 'screen-targets': 'Monatsziele',
     'screen-settings': 'Grundeinstellungen', 'screen-admin': 'Mitarbeiterverwaltung',
     'screen-cockpit': 'Cockpit',
+    'screen-emp-targets': 'Mitarbeiter-Ziele',
   };
   document.getElementById('header-title').textContent = titles[id] || 'juka dojo';
   const sub = currentEmployee ? `${currentEmployee.name} · ${currentEmployee.location}` : '';
@@ -1658,6 +1672,240 @@ document.addEventListener('DOMContentLoaded', () => {
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+
+// ══════════════════════════════════════════════════
+// MITARBEITER-ZIELE
+// ══════════════════════════════════════════════════
+async function loadEmpTargets() {
+  navigate('screen-emp-targets');
+  const locs = _locsCache || [];
+  const sel = document.getElementById('et-location');
+  sel.innerHTML = locs.map(l => `<option value="${l.id}">${l.name.replace('juka dojo ','')}</option>`).join('');
+  if (currentEmployee?.location_id) sel.value = currentEmployee.location_id;
+
+  const mSel = document.getElementById('et-month');
+  const now = new Date();
+  let opts = '';
+  for (let y = now.getFullYear(); y >= now.getFullYear()-1; y--) {
+    for (let m = 12; m >= 1; m--) {
+      if (y === now.getFullYear() && m > now.getMonth()+2) continue;
+      const label = `${MONTHS_DE[m-1]} ${y}`;
+      const val = `${y}-${String(m).padStart(2,'0')}`;
+      const sel2 = (y === now.getFullYear() && m === now.getMonth()+1) ? 'selected' : '';
+      opts += `<option value="${val}" ${sel2}>${label}</option>`;
+    }
+  }
+  mSel.innerHTML = opts;
+  await loadEmpTargetsData();
+}
+
+async function loadEmpTargetsData() {
+  const locId = document.getElementById('et-location').value;
+  const [year, month] = document.getElementById('et-month').value.split('-').map(Number);
+  const cont = document.getElementById('et-content');
+  cont.innerHTML = '<div style="color:var(--muted);text-align:center;padding:32px;">Lade…</div>';
+
+  // Load employees for location
+  const { data: emps } = await db.from('employees')
+    .select('id,name,location_id')
+    .eq('location_id', locId)
+    .eq('active', true)
+    .order('name');
+
+  // Load existing targets
+  const empIds = (emps||[]).map(e => e.id);
+  const { data: targets } = await db.from('employee_targets')
+    .select('*')
+    .eq('year', year)
+    .eq('month', month)
+    .in('employee_id', empIds.length ? empIds : ['none']);
+
+  const targetMap = {};
+  (targets||[]).forEach(t => targetMap[t.employee_id] = t);
+
+  // Load location settings (AQ, EQ)
+  const { data: settings } = await db.from('settings').select('key,value').eq('location_id', locId);
+  const settMap = {};
+  (settings||[]).forEach(s => settMap[s.key] = parseFloat(s.value));
+  const aq = settMap['abschlussquote'] || 70;
+  const eq = settMap['erscheinquote']  || 70;
+
+  // Load actual KW data for this month (Ist-Werte)
+  const dateFrom = `${year}-${String(month).padStart(2,'0')}-01`;
+  const dateTo   = new Date(year, month, 0).toISOString().split('T')[0];
+  const { data: reports } = await db.from('daily_reports')
+    .select('employee_id,date,abschluesse_gesamt,gt_abschluesse,calls_gesamt,bt_erschienen')
+    .eq('location_id', locId)
+    .gte('date', dateFrom)
+    .lte('date', dateTo);
+
+  // Group by employee + KW
+  const istByEmpKw = {};
+  (reports||[]).forEach(r => {
+    const kw = getISOWeekString(new Date(r.date));
+    const key = `${r.employee_id}__${kw}`;
+    if (!istByEmpKw[key]) istByEmpKw[key] = {abschl:0, gt:0, calls:0, erschienen:0};
+    istByEmpKw[key].abschl     += r.abschluesse_gesamt || 0;
+    istByEmpKw[key].gt         += r.gt_abschluesse || 0;
+    istByEmpKw[key].calls      += r.calls_gesamt || 0;
+    istByEmpKw[key].erschienen += r.bt_erschienen || 0;
+  });
+
+  // Get KW list for this month
+  const kws = [];
+  const d = new Date(year, month-1, 1);
+  const end = new Date(year, month, 0);
+  while (d <= end) {
+    const kw = getISOWeekString(d);
+    if (!kws.includes(kw)) kws.push(kw);
+    d.setDate(d.getDate()+7);
+  }
+
+  // Count working weeks
+  const workingWeeks = kws.length;
+
+  let html = `<div style="font-size:12px;color:var(--muted);margin-bottom:12px;">
+    AQ: ${aq}% · EQ: ${eq}% · ${workingWeeks} Wochen
+  </div>`;
+
+  if (!emps || emps.length === 0) {
+    html += '<div style="color:var(--muted);">Keine Mitarbeiter für diesen Standort.</div>';
+    cont.innerHTML = html;
+    return;
+  }
+
+  emps.forEach(emp => {
+    const t = targetMap[emp.id] || {};
+    const sollAb = t.soll_abschluesse || 0;
+    const sollGt = t.soll_gasttickets || 0;
+    const sollCalls = t.soll_calls || 0;
+    const sollErsch = sollAb > 0 ? Math.ceil(sollAb / (aq/100)) : 0;
+    const sollBt    = sollErsch > 0 ? Math.ceil(sollErsch / (eq/100)) : 0;
+
+    // Weekly breakdown
+    const wSollAb    = workingWeeks > 0 ? (sollAb / workingWeeks) : 0;
+    const wSollGt    = workingWeeks > 0 ? (sollGt / workingWeeks) : 0;
+    const wSollCalls = workingWeeks > 0 ? (sollCalls / workingWeeks) : 0;
+    const wSollErsch = workingWeeks > 0 ? (sollErsch / workingWeeks) : 0;
+
+    // IST gesamt
+    let istAbGes=0, istGtGes=0, istCallsGes=0, istErschGes=0;
+    kws.forEach(kw => {
+      const k = `${emp.id}__${kw}`;
+      if (istByEmpKw[k]) {
+        istAbGes    += istByEmpKw[k].abschl;
+        istGtGes    += istByEmpKw[k].gt;
+        istCallsGes += istByEmpKw[k].calls;
+        istErschGes += istByEmpKw[k].erschienen;
+      }
+    });
+
+    function ampel(ist, soll) {
+      if (soll === 0) return '';
+      const pct = ist / soll;
+      return pct >= 0.9 ? '🟢' : pct >= 0.7 ? '🟡' : '🔴';
+    }
+
+    // KW rows
+    let kwRows = '';
+    kws.forEach(kw => {
+      const kwNr = kw.split('-W')[1];
+      const k = `${emp.id}__${kw}`;
+      const ist = istByEmpKw[k] || {abschl:0,gt:0,calls:0,erschienen:0};
+      kwRows += `<tr style="font-size:12px;">
+        <td style="padding:3px 0;color:var(--muted);">KW ${kwNr}</td>
+        <td style="text-align:right;padding:3px 4px;">${ist.abschl} <span style="color:var(--muted);">/ ${Math.round(wSollAb)}</span> ${ampel(ist.abschl,wSollAb)}</td>
+        <td style="text-align:right;padding:3px 4px;">${ist.gt} <span style="color:var(--muted);">/ ${Math.round(wSollGt)}</span> ${ampel(ist.gt,wSollGt)}</td>
+        <td style="text-align:right;padding:3px 4px;">${ist.calls} <span style="color:var(--muted);">/ ${Math.round(wSollCalls)}</span> ${ampel(ist.calls,wSollCalls)}</td>
+        <td style="text-align:right;padding:3px 4px;">${ist.erschienen} <span style="color:var(--muted);">/ ${Math.round(wSollErsch)}</span></td>
+      </tr>`;
+    });
+
+    html += `<div class="card" style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-weight:700;">${emp.name}</div>
+        <button style="background:none;border:1px solid var(--primary);color:var(--primary);border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer;"
+          onclick="openEmpTargetEdit('${emp.id}','${emp.name}',${year},${month},'${locId}',${sollAb},${sollGt},${sollCalls})">
+          ${sollAb > 0 ? 'Bearbeiten' : 'Ziele setzen'}
+        </button>
+      </div>
+
+      ${sollAb > 0 ? `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;font-size:13px;">
+        <div class="card" style="padding:8px;margin:0;">
+          <div style="color:var(--muted);font-size:11px;">Abschlüsse</div>
+          <div style="font-weight:700;font-size:18px;">${istAbGes} <span style="font-size:13px;color:var(--muted);">/ ${sollAb}</span> ${ampel(istAbGes,sollAb)}</div>
+        </div>
+        <div class="card" style="padding:8px;margin:0;">
+          <div style="color:var(--muted);font-size:11px;">Gasttickets</div>
+          <div style="font-weight:700;font-size:18px;">${istGtGes} <span style="font-size:13px;color:var(--muted);">/ ${sollGt}</span> ${ampel(istGtGes,sollGt)}</div>
+        </div>
+        <div class="card" style="padding:8px;margin:0;">
+          <div style="color:var(--muted);font-size:11px;">Calls</div>
+          <div style="font-weight:700;font-size:18px;">${istCallsGes} <span style="font-size:13px;color:var(--muted);">/ ${sollCalls}</span> ${ampel(istCallsGes,sollCalls)}</div>
+        </div>
+        <div class="card" style="padding:8px;margin:0;">
+          <div style="color:var(--muted);font-size:11px;">Erschienen → nötig: ${sollBt} BT</div>
+          <div style="font-weight:700;font-size:18px;">${istErschGes} <span style="font-size:13px;color:var(--muted);">/ ${sollErsch}</span> ${ampel(istErschGes,sollErsch)}</div>
+        </div>
+      </div>
+
+      <table style="width:100%;border-collapse:collapse;">
+        <tr style="font-size:11px;color:var(--muted);">
+          <th style="text-align:left;font-weight:500;">Woche</th>
+          <th style="text-align:right;font-weight:500;">Abschl.</th>
+          <th style="text-align:right;font-weight:500;">GT</th>
+          <th style="text-align:right;font-weight:500;">Calls</th>
+          <th style="text-align:right;font-weight:500;">Ersch.</th>
+        </tr>
+        ${kwRows}
+      </table>` : `<div style="color:var(--muted);font-size:13px;">Noch keine Ziele gesetzt.</div>`}
+    </div>`;
+  });
+
+  cont.innerHTML = html;
+}
+
+function openEmpTargetEdit(empId, empName, year, month, locId, ab, gt, calls) {
+  const cont = document.getElementById('et-content');
+  const top = cont.scrollTop;
+  document.getElementById('et-content').insertAdjacentHTML('afterbegin', `
+    <div id="et-edit-modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:999;display:flex;align-items:flex-end;">
+      <div style="background:var(--card);width:100%;border-radius:20px 20px 0 0;padding:24px;max-height:80vh;overflow-y:auto;">
+        <div style="font-weight:700;font-size:17px;margin-bottom:16px;">Ziele: ${empName}</div>
+        <label class="field-label">Soll-Abschlüsse
+          <input class="input" type="number" id="ete-ab" value="${ab}" min="0">
+        </label>
+        <label class="field-label">Soll-Gasttickets
+          <input class="input" type="number" id="ete-gt" value="${gt}" min="0">
+        </label>
+        <label class="field-label">Soll-Calls
+          <input class="input" type="number" id="ete-calls" value="${calls}" min="0">
+        </label>
+        <div style="display:flex;gap:8px;margin-top:16px;">
+          <button class="btn" style="flex:1;" onclick="saveEmpTarget('${empId}',${year},${month},'${locId}')">Speichern</button>
+          <button class="btn btn-secondary" style="flex:1;" onclick="document.getElementById('et-edit-modal').remove()">Abbrechen</button>
+        </div>
+      </div>
+    </div>
+  `);
+}
+
+async function saveEmpTarget(empId, year, month, locId) {
+  const ab    = parseInt(document.getElementById('ete-ab').value) || 0;
+  const gt    = parseInt(document.getElementById('ete-gt').value) || 0;
+  const calls = parseInt(document.getElementById('ete-calls').value) || 0;
+
+  const { error } = await db.from('employee_targets').upsert({
+    employee_id: empId, location_id: locId, year, month,
+    soll_abschluesse: ab, soll_gasttickets: gt, soll_calls: calls
+  }, { onConflict: 'employee_id,year,month' });
+
+  document.getElementById('et-edit-modal')?.remove();
+  if (error) { showToast('Fehler: ' + error.message); return; }
+  showToast('Gespeichert ✓');
+  await loadEmpTargetsData();
 }
 
 // ══════════════════════════════════════════════════
